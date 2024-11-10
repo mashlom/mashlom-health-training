@@ -2,7 +2,7 @@ name: Deploy React to GitHub Pages
 
 on:
   push:
-    branches: [main] # or 'master' if that's your default branch
+    branches: [main] # or master
   workflow_dispatch:
 
 permissions:
@@ -24,10 +24,11 @@ jobs:
         run: npm ci
 
       - name: Build React app
-        run: npm run build
+        run: CI=false npm run build # Added CI=false to prevent treating warnings as errors
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build
           branch: gh-pages
+          clean: true # Added clean option to ensure clean deployment
