@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Home, ArrowRight, Award, Check, X } from "lucide-react";
+import "./commoncss/global.css";
 
 const pulmonaryQuestions = [
   {
@@ -172,7 +173,7 @@ const HomeButton = ({ onClick }) => (
   <Button
     onClick={onClick}
     variant="outline"
-    className="fixed top-4 left-4 flex items-center gap-2"
+    className="fixed top-4 left-4 flex items-center gap-2 bottom-menu-color"
   >
     <Home className="w-4 h-4" />
     דף הבית
@@ -321,26 +322,48 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4" dir="rtl">
-      {currentPage === "home" && <HomePage onTopicSelect={handleTopicSelect} />}
-      {currentPage === "quiz" && (
-        <QuizPage
-          questions={
-            quizType === "pulmonaryQuestions"
-              ? pulmonaryQuestions
-              : mechanicalVentilationQuestions
-          }
-          onComplete={handleQuizComplete}
-          onHome={handleRestart}
+    <div className="flex flex-col items-center min-h-screen w-full max-w-[700px] mx-auto">
+      {/* Header */}
+      <header className="header w-full flex justify-between items-center">
+        <img
+          src="assets/emek_logo.png"
+          alt="Mashlom Logo"
+          className="header-mashlom-logo"
         />
-      )}
-      {currentPage === "score" && (
-        <ScorePage
-          score={finalScore}
-          onRestart={handleRestart}
-          onHome={handleRestart}
+        <span className="header-text">mashlom.me - כלי עזר לצוות רפואה</span>
+        <img
+          src="assets/IconOnly_mashlomme.png"
+          alt="Emek Logo"
+          className="header-emek-logo"
         />
-      )}
+      </header>
+
+      {/* Main Content */}
+      <main className="main-content w-full flex-grow">
+        <div dir="rtl">
+          {currentPage === "home" && (
+            <HomePage onTopicSelect={handleTopicSelect} />
+          )}
+          {currentPage === "quiz" && (
+            <QuizPage
+              questions={
+                quizType === "pulmonaryQuestions"
+                  ? pulmonaryQuestions
+                  : mechanicalVentilationQuestions
+              }
+              onComplete={handleQuizComplete}
+              onHome={handleRestart}
+            />
+          )}
+          {currentPage === "score" && (
+            <ScorePage
+              score={finalScore}
+              onRestart={handleRestart}
+              onHome={handleRestart}
+            />
+          )}
+        </div>
+      </main>
     </div>
   );
 };
