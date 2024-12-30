@@ -326,13 +326,13 @@ const App = () => {
       {/* Header */}
       <header className="header w-full flex justify-between items-center">
         <img
-          src="assets/emek_logo.png"
+          src="/assets/emek_logo.png"
           alt="Mashlom Logo"
           className="header-mashlom-logo"
         />
         <span className="header-text">mashlom.me - כלי עזר לצוות רפואה</span>
         <img
-          src="assets/IconOnly_mashlomme.png"
+          src="/assets/IconOnly_mashlomme.png"
           alt="Emek Logo"
           className="header-emek-logo"
         />
