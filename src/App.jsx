@@ -494,20 +494,18 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
                     : selectedAnswer === index
                     ? "bg-[#fff0f0] text-[var(--page-font-color)] border border-[#ff9999]"
                     : "bg-[var(--header-background)] text-[var(--page-font-color)] border border-gray-300"
-                  : "bg-[var(--header-background)] text-[var(--page-font-color)] border border-gray-300 hover:bg-[var(--header-background)] hover:opacity-80"
+                  : "bg-[var(--header-background)] text-[var(--page-font-color)] border border-gray-300 hover:bg-[var(--header-background)] hover:text-[var(--page-font-color)] hover:opacity-80"
               }`}
               onClick={() => !showAnswer && handleAnswer(index)}
               disabled={showAnswer}
             >
               <div className="flex w-full items-center">
-                <div className="w-5 h-5 shrink-0 ml-2">
-                  {showAnswer &&
-                    (index === questions[currentQuestion].correct ? (
-                      <Check className="w-full h-full text-green-600" />
-                    ) : selectedAnswer === index ? (
-                      <X className="w-full h-full text-[#ff9999]" />
-                    ) : null)}
-                </div>
+                {showAnswer &&
+                  (index === questions[currentQuestion].correct ? (
+                    <Check className="w-5 h-5 shrink-0 ml-2 text-green-600" />
+                  ) : selectedAnswer === index ? (
+                    <X className="w-5 h-5 shrink-0 ml-2 text-[#ff9999]" />
+                  ) : null)}
                 <span className="w-full text-right">{answer}</span>
               </div>
             </Button>
