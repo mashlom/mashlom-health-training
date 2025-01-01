@@ -499,14 +499,14 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
               onClick={() => !showAnswer && handleAnswer(index)}
               disabled={showAnswer}
             >
-              <div className="flex w-full items-center">
+              <div className="flex w-full items-center justify-between">
+                <span className="w-full text-right">{answer}</span>
                 {showAnswer &&
                   (index === questions[currentQuestion].correct ? (
-                    <Check className="w-5 h-5 shrink-0 ml-2 text-green-600" />
+                    <Check className="w-5 h-5 shrink-0 mr-2 text-green-600" />
                   ) : selectedAnswer === index ? (
-                    <X className="w-5 h-5 shrink-0 ml-2 text-[#ff9999]" />
+                    <X className="w-5 h-5 shrink-0 mr-2 text-[#ff9999]" />
                   ) : null)}
-                <span className="w-full text-right">{answer}</span>
               </div>
             </Button>
           ))}
