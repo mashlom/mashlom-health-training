@@ -25,6 +25,9 @@ const ITEMS_PER_PAGE = 10;
 const BUTTON_HEIGHT = "h-[48px]"; // Fixed height instead of min-height
 const CONTENT_HEIGHT = "min-h-[600px]";
 
+const isProduction = import.meta.env.PROD;
+const basePath = isProduction ? "/er" : "";
+
 const HomeButton = ({ onClick, text = "" }) => (
   <Button
     onClick={onClick}
@@ -425,9 +428,9 @@ const ERQuizApp = () => {
 
 const App = () => {
   return (
-    <BrowserRouter
-      basename={process.env.NODE_ENV === "production" ? "/er" : "/"}
-    >
+    <BrowserRouter basename={isProduction ? "/er" : "/"}>
+      {/* Rest of your header */}
+
       <Routes>
         <Route path="/" element={<ERQuizApp />} />
       </Routes>
