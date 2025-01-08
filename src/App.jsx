@@ -1,11 +1,4 @@
 import React, { useState, useEffect } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import {
@@ -24,9 +17,6 @@ import quizData from "./data/quizData.json";
 const ITEMS_PER_PAGE = 10;
 const BUTTON_HEIGHT = "h-[48px]"; // Fixed height instead of min-height
 const CONTENT_HEIGHT = "min-h-[600px]";
-
-const isProduction = import.meta.env.PROD;
-const basePath = isProduction ? "/er" : "";
 
 const HomeButton = ({ onClick, text = "" }) => (
   <Button
@@ -354,19 +344,22 @@ const ScorePage = ({ score, onHome }) => {
   );
 };
 
-const ERQuizApp = () => {
+const App = () => {
   const [currentPage, setCurrentPage] = useState("home");
   const [currentQuestions, setCurrentQuestions] = useState([]);
   const [finalScore, setFinalScore] = useState(null);
-  const location = useLocation();
 
   const handleTopicSelect = (topicId) => {
     if (topicId === "random") {
+      // Get all questions from all topics
       const allQuestions = quizData.quizTopics.reduce((acc, topic) => {
         return [...acc, ...topic.questions];
       }, []);
+
+      // Randomly select 10 questions
       const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
       const selectedQuestions = shuffled.slice(0, 10);
+
       setCurrentQuestions(selectedQuestions);
     } else {
       const selectedTopic = quizData.quizTopics.find(
@@ -388,14 +381,11 @@ const ERQuizApp = () => {
     setFinalScore(null);
   };
 
-  // Determine base URL for assets
-  const baseUrl = process.env.NODE_ENV === "production" ? "/er" : "";
-
   return (
     <div className="flex flex-col items-center min-h-screen w-full max-w-[700px] mx-auto">
       <header className="w-full h-[50px] bg-[var(--header-background)] border border-[var(--border-color)] flex justify-between items-center">
         <img
-          src={`${baseUrl}/assets/IconOnly_mashlomme.png`}
+          src="/assets/IconOnly_mashlomme.png"
           alt="Emek Logo"
           className="h-[42px] w-[80px] rounded-[50px] object-contain"
         />
@@ -423,18 +413,6 @@ const ERQuizApp = () => {
         </div>
       </main>
     </div>
-  );
-};
-
-const App = () => {
-  return (
-    <BrowserRouter basename={isProduction ? "/er" : "/"}>
-      {/* Rest of your header */}
-
-      <Routes>
-        <Route path="/" element={<ERQuizApp />} />
-      </Routes>
-    </BrowserRouter>
   );
 };
 
