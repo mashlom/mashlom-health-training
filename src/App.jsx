@@ -384,34 +384,6 @@ const App = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen w-full max-w-[700px] mx-auto">
-      <Helmet>
-        <meta charSet="UTF-8" />
-        <link
-          rel="icon"
-          type="image/png"
-          href="/assets/fav-icon96x96-8knae6haT.png"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>מה שלומי - כלי עזר לצוות הרפואה</title>
-        <meta property="og:title" content="מה שלומי - כלי עזר לצוות הרפואה" />
-        <meta property="og:type" content="Article" />
-        <meta property="og:image:type" content="image/jpeg" />
-        <meta property="og:site_name" content="mashlom.me" />
-        <meta property="og:url" content="https://mashlom.me/#/apps/" />
-        <meta property="og:description" content="כלי עזר לצוות הרפואה" />
-        <meta name="description" content="כלי עזר לצוות הרפואה" />
-        <meta name="keywords" content="רפואה, מתמחים, mashlom.me" />
-        <meta name="robots" content="index, follow, NOODP" />
-        <meta
-          property="og:image"
-          content="https://mashlom.me/apps/pediatric/assets/logo/FullLogo1200x630.jpg"
-        />
-        <meta
-          property="og:image:secure_url"
-          content="https://mashlom.me/apps/pediatric/assets/logo/FullLogo1200x630.jpg"
-        />
-      </Helmet>
-
       {/* Rest of your existing App component code */}
       <header className="w-full h-[50px] bg-[var(--header-background)] border border-[var(--border-color)] flex justify-between items-center">
         {/* ... existing header code ... */}
