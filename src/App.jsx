@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
-import { Home, Check, X, ArrowLeft, Trophy, Star } from "lucide-react";
+import {
+  Home,
+  Check,
+  X,
+  ArrowLeft,
+  Trophy,
+  Star,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import "./commoncss/global.css";
 import quizData from "./data/quizData.json";
+
+const ITEMS_PER_PAGE = 10;
+const BUTTON_HEIGHT = "h-[48px]"; // Fixed height instead of min-height
+const CONTENT_HEIGHT = "min-h-[600px]";
 
 const HomeButton = ({ onClick, text = "" }) => (
   <Button
@@ -15,41 +28,110 @@ const HomeButton = ({ onClick, text = "" }) => (
   </Button>
 );
 
-const HomePage = ({ onTopicSelect }) => (
-  <Card className="max-w-lg mx-auto mt-8 p-6 bg-[var(--page-background-color)] border-[var(--border-color)]">
-    <CardContent className="space-y-4">
-      <h1 className="text-2xl font-bold text-center mb-6 text-[var(--page-font-color)]">
-        שאלות הכנה למבחנים ברפואה דחופה
-      </h1>
+const HomePage = ({ onTopicSelect }) => {
+  const [currentPage, setCurrentPage] = useState(1);
 
-      <div className="text-l text-center mb-6 text-[var(--page-font-color)]">
-        שאלות הכנה לשלב א ברפואה דחופה ע"פ, th10 edition edition Medicine
-        Emergency s'Rosen
-      </div>
-      <div className="space-y-4">
-        <Button
-          className="w-full text-lg bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300"
-          onClick={() => onTopicSelect("random")}
-        >
-          <div className="w-full text-center" dir="ltr">
-            שאלות על כל החומר
+  const totalPages = Math.ceil(quizData.quizTopics.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentTopics = quizData.quizTopics.slice(startIndex, endIndex);
+
+  const filledTopics = [...currentTopics];
+  while (filledTopics.length < ITEMS_PER_PAGE) {
+    filledTopics.push({
+      id: `empty-${currentPage}-${filledTopics.length}`,
+      isEmpty: true,
+    });
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  return (
+    <Card className="max-w-lg mx-auto mt-4 mb-4 bg-[var(--page-background-color)] border-[var(--border-color)]">
+      <CardContent className={`p-4 flex flex-col ${CONTENT_HEIGHT}`}>
+        {/* Header Section */}
+        <div className="mb-4">
+          <h1 className="text-xl font-bold text-center mb-2 text-[var(--page-font-color)]">
+            שאלות הכנה למבחנים ברפואה דחופה
+          </h1>
+
+          <div className="text-sm text-center mb-3 text-[var(--page-font-color)]">
+            שאלות הכנה לשלב א ברפואה דחופה ע"פ, th10 edition edition Medicine
+            Emergency s'Rosen
           </div>
-        </Button>
-        {quizData.quizTopics.map((topic) => (
+
           <Button
-            key={topic.id}
-            className="w-full text-lg bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300"
-            onClick={() => onTopicSelect(topic.id)}
+            className={`w-full text-base bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
+            onClick={() => onTopicSelect("random")}
           >
             <div className="w-full text-center" dir="ltr">
-              {topic.title}
+              שאלות על כל החומר
             </div>
           </Button>
-        ))}
-      </div>
-    </CardContent>
-  </Card>
-);
+        </div>
+
+        {/* Buttons Section */}
+        <div className="flex-grow flex flex-col space-y-2">
+          {filledTopics.map((topic, index) => (
+            <Button
+              key={`${currentPage}-${topic.id || `topic-${index}`}`}
+              className={`w-full text-sm transition-all duration-300 ${BUTTON_HEIGHT} ${
+                topic.isEmpty
+                  ? "opacity-0 pointer-events-none"
+                  : "bg-[var(--buttons-background-color)] text-[var(--buttons-color)]"
+              }`}
+              onClick={() => !topic.isEmpty && onTopicSelect(topic.id)}
+            >
+              {!topic.isEmpty && (
+                <div className="w-full px-2 overflow-hidden">
+                  <div className="text-center line-clamp-2 leading-5">
+                    <span style={{ direction: "rtl" }}>
+                      פרק {topic.chapter} -{" "}
+                    </span>
+                    <span style={{ direction: "ltr" }}>{topic.title}</span>
+                  </div>
+                </div>
+              )}
+            </Button>
+          ))}
+        </div>
+
+        {/* Pagination Controls */}
+        <div className="flex-none pt-3 mt-3 border-t border-[var(--border-color)]">
+          <div className="flex justify-between items-center">
+            <Button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="bg-[var(--buttons-background-color)] text-[var(--buttons-color)] flex items-center gap-1 px-2 text-sm h-8"
+            >
+              <ChevronRight className="w-3 h-3" />
+              הקודם
+            </Button>
+
+            <span className="text-sm text-[var(--page-font-color)]">
+              עמוד {currentPage} מתוך {totalPages}
+            </span>
+
+            <Button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="bg-[var(--buttons-background-color)] text-[var(--buttons-color)] flex items-center gap-1 px-2 text-sm h-8"
+            >
+              הבא
+              <ChevronLeft className="w-3 h-3" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const QuizPage = ({ questions, onComplete, onHome }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -57,6 +139,8 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
   const [score, setScore] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState([]);
+  const [shuffledAnswers, setShuffledAnswers] = useState([]);
+  const [correctAnswerIndex, setCorrectAnswerIndex] = useState(null);
 
   useEffect(() => {
     const shuffleArray = (array) => {
@@ -68,13 +152,36 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
       return shuffled;
     };
 
-    setShuffledQuestions(shuffleArray(questions));
+    // Shuffle questions
+    const shuffled = shuffleArray(questions);
+    setShuffledQuestions(shuffled);
   }, [questions]);
+
+  useEffect(() => {
+    if (shuffledQuestions.length > 0) {
+      const currentQ = shuffledQuestions[currentQuestion];
+
+      // Create array of answer objects with original indices
+      const answersWithIndices = currentQ.answers.map((answer, index) => ({
+        text: answer,
+        isCorrect: index === currentQ.correct,
+      }));
+
+      // Shuffle the answers
+      const shuffled = [...answersWithIndices].sort(() => Math.random() - 0.5);
+
+      // Find new index of correct answer
+      const newCorrectIndex = shuffled.findIndex((answer) => answer.isCorrect);
+
+      setShuffledAnswers(shuffled.map((answer) => answer.text));
+      setCorrectAnswerIndex(newCorrectIndex);
+    }
+  }, [currentQuestion, shuffledQuestions]);
 
   const handleAnswer = (index) => {
     setSelectedAnswer(index);
     setShowAnswer(true);
-    if (index === shuffledQuestions[currentQuestion].correct) {
+    if (index === correctAnswerIndex) {
       setScore(score + 1);
     }
   };
@@ -89,7 +196,7 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
     }
   };
 
-  if (shuffledQuestions.length === 0) return null;
+  if (shuffledQuestions.length === 0 || !shuffledAnswers.length) return null;
 
   return (
     <div className="max-w-3xl mx-auto p-4">
@@ -111,14 +218,14 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
           </div>
 
           <div className="space-y-4">
-            {shuffledQuestions[currentQuestion].answers.map((answer, index) => (
+            {shuffledAnswers.map((answer, index) => (
               <button
                 key={index}
                 onClick={() => !showAnswer && handleAnswer(index)}
                 disabled={showAnswer}
                 className={`w-full min-h-[3.5rem] px-4 py-3 text-right rounded-lg border border-[var(--border-color)] ${
                   showAnswer
-                    ? index === shuffledQuestions[currentQuestion].correct
+                    ? index === correctAnswerIndex
                       ? "bg-green-100 border-green-300 text-[var(--page-font-color)]"
                       : selectedAnswer === index
                       ? "bg-[#fff0f0] border-[#ff9999] text-[var(--page-font-color)]"
@@ -129,7 +236,7 @@ const QuizPage = ({ questions, onComplete, onHome }) => {
                 <div className="flex justify-between items-center">
                   <span className="flex-1">{answer}</span>
                   {showAnswer &&
-                    (index === shuffledQuestions[currentQuestion].correct ? (
+                    (index === correctAnswerIndex ? (
                       <Check className="w-5 h-5 text-green-600 ml-2 shrink-0" />
                     ) : selectedAnswer === index ? (
                       <X className="w-5 h-5 text-[#ff9999] ml-2 shrink-0" />
