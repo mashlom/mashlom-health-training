@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Check, X, ArrowLeft, Home } from 'lucide-react';
+import quizData from '../data/quizData.json';
 
 interface Question {
   question: string;
@@ -10,26 +12,20 @@ interface Question {
   explanation: string;
 }
 
-interface QuizPageProps {
-  questions: Question[];
-  onComplete: (score: number) => void;
-  onHome: () => void;
-}
-
-const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({ 
-  onClick, 
-  text = "" 
-}) => (
+const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({ onClick, text = "" }) => (
   <Button
     onClick={onClick}
-    className="quiz-home-button"
+    className="flex items-center gap-2 bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300"
   >
     <Home className="w-4 h-4" />
     {text && <span>{text}</span>}
   </Button>
 );
 
-const QuizPage: React.FC<QuizPageProps> = ({ questions, onComplete, onHome }) => {
+const QuizPage: React.FC = () => {
+  const { department, topicId } = useParams<{ department: string; topicId: string }>();
+  const navigate = useNavigate();
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -38,18 +34,34 @@ const QuizPage: React.FC<QuizPageProps> = ({ questions, onComplete, onHome }) =>
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([]);
   const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
 
+  // Load and prepare questions based on topicId
   useEffect(() => {
-    const shuffleArray = <T,>(array: T[]): T[] => {
-      const shuffled = [...array];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
+    let questionsToUse: Question[] = [];
 
-    setShuffledQuestions(shuffleArray(questions));
-  }, [questions]);
+    if (topicId === 'random') {
+      // Get all questions from all topics
+      const allQuestions = quizData.quizTopics.reduce<Question[]>((acc, topic) => {
+        return [...acc, ...topic.questions];
+      }, []);
+
+      // Randomly select 10 questions
+      const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+      questionsToUse = shuffled.slice(0, 10);
+    } else {
+      // Find the specific topic
+      const topic = quizData.quizTopics.find(t => t.id === topicId);
+      if (!topic) {
+        // If topic not found, redirect to department home
+        navigate(`/${department}`);
+        return;
+      }
+      questionsToUse = topic.questions;
+    }
+
+    // Shuffle the questions
+    const shuffled = [...questionsToUse].sort(() => 0.5 - Math.random());
+    setShuffledQuestions(shuffled);
+  }, [topicId, department, navigate]);
 
   useEffect(() => {
     if (shuffledQuestions.length > 0) {
@@ -76,14 +88,21 @@ const QuizPage: React.FC<QuizPageProps> = ({ questions, onComplete, onHome }) =>
     }
   };
 
-  const nextQuestion = () => {
+  const handleNextQuestion = () => {
     if (currentQuestion + 1 < shuffledQuestions.length) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
       setShowAnswer(false);
     } else {
-      onComplete(Math.round((score / shuffledQuestions.length) * 100));
+      // Navigate to finish page with score
+      navigate(`/${department}/quiz/${topicId}/finish`, {
+        state: { score: Math.round((score / shuffledQuestions.length) * 100) }
+      });
     }
+  };
+
+  const handleHome = () => {
+    navigate(`/${department}`);
   };
 
   if (shuffledQuestions.length === 0 || !shuffledAnswers.length) return null;
@@ -96,7 +115,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ questions, onComplete, onHome }) =>
             <div className="text-sm font-medium text-[var(--header-text-color)]">
               שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
             </div>
-            <HomeButton onClick={onHome} />
+            <HomeButton onClick={handleHome} />
           </div>
         </div>
 
@@ -149,7 +168,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ questions, onComplete, onHome }) =>
 
               <div className="flex justify-end pt-4">
                 <Button
-                  onClick={nextQuestion}
+                  onClick={handleNextQuestion}
                   className="bg-[var(--buttons-background-color)] text-[var(--buttons-color)] px-6 py-2 rounded-lg flex items-center gap-2"
                 >
                   {currentQuestion + 1 === shuffledQuestions.length

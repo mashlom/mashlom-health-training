@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
@@ -16,19 +17,36 @@ interface QuizTopic {
   questions: any[]; // You can define a more specific type if needed
 }
 
-interface HomePageProps {
-  onTopicSelect: (topicId: string) => void;
-}
-
 interface EmptyTopic {
   id: string;
   isEmpty: true;
 }
 
-const HomePage: React.FC<HomePageProps> = ({ onTopicSelect }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+const HomePage: React.FC = () => {
+  const { department } = useParams<{ department: string }>();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get page from URL or default to 1
+  const initialPage = Number(searchParams.get('page')) || 1;
+  const [currentPage, setCurrentPage] = useState(initialPage);
 
+  // Total pages calculation
   const totalPages = Math.ceil(quizData.quizTopics.length / ITEMS_PER_PAGE);
+
+  // Ensure page number is valid
+  useEffect(() => {
+    if (currentPage < 1 || currentPage > totalPages) {
+      setCurrentPage(1);
+      setSearchParams({ page: '1' });
+    }
+  }, [currentPage, totalPages, setSearchParams]);
+
+  // Update URL when page changes
+  useEffect(() => {
+    setSearchParams({ page: currentPage.toString() });
+  }, [currentPage, setSearchParams]);
+
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentTopics = quizData.quizTopics.slice(startIndex, endIndex);
@@ -43,11 +61,19 @@ const HomePage: React.FC<HomePageProps> = ({ onTopicSelect }) => {
   }
 
   const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    if (currentPage < totalPages) {
+      setCurrentPage(prev => prev + 1);
+    }
   };
 
   const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
+  const handleTopicSelect = (topicId: string) => {
+    navigate(`/${department}/quiz/${topicId}`);
   };
 
   return (
@@ -66,7 +92,7 @@ const HomePage: React.FC<HomePageProps> = ({ onTopicSelect }) => {
 
           <Button
             className={`w-full text-base bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
-            onClick={() => onTopicSelect("random")}
+            onClick={() => handleTopicSelect("random")}
           >
             <div className="w-full text-center" dir="ltr">
               שאלות על כל החומר
@@ -84,7 +110,7 @@ const HomePage: React.FC<HomePageProps> = ({ onTopicSelect }) => {
                   ? "opacity-0 pointer-events-none"
                   : "bg-[var(--buttons-background-color)] text-[var(--buttons-color)]"
               }`}
-              onClick={() => !('isEmpty' in topic) && onTopicSelect(topic.id)}
+              onClick={() => !('isEmpty' in topic) && handleTopicSelect(topic.id)}
             >
               {'isEmpty' in topic ? null : (
                 <div className="w-full px-2 overflow-hidden">

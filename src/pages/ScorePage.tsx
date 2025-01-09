@@ -1,11 +1,11 @@
 import React from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/Card';
 import { Button } from '../components/Button';
 import { Trophy, Star, Home } from 'lucide-react';
 
-interface ScorePageProps {
+interface LocationState {
   score: number;
-  onHome: () => void;
 }
 
 const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({ 
@@ -21,7 +21,20 @@ const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({
   </Button>
 );
 
-const ScorePage: React.FC<ScorePageProps> = ({ score, onHome }) => {
+const ScorePage: React.FC = () => {
+  const { department } = useParams<{ department: string }>();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const state = location.state as LocationState;
+
+  // If no score in state, redirect to department home
+  if (!state?.score) {
+    navigate(`/${department}`);
+    return null;
+  }
+
+  const score = state.score;
+
   const getMessage = (score: number): string => {
     if (score >= 90) return "מעולה! שליטה מרשימה בחומר!";
     if (score >= 80) return "כל הכבוד! תוצאה מצויינת!";
@@ -34,6 +47,10 @@ const ScorePage: React.FC<ScorePageProps> = ({ score, onHome }) => {
     if (score >= 80) return <Trophy className="score-icon trophy" />;
     if (score >= 60) return <Star className="score-icon star" />;
     return <Trophy className="score-icon default" />;
+  };
+
+  const handleHome = () => {
+    navigate(`/${department}`);
   };
 
   return (
@@ -77,7 +94,7 @@ const ScorePage: React.FC<ScorePageProps> = ({ score, onHome }) => {
 
         <div className="flex justify-center gap-4 pt-4">
           <HomeButton
-            onClick={onHome}
+            onClick={handleHome}
             text="חזור לתפריט"            
           />
         </div>
