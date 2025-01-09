@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent } from '../components/Card';
-import { Button } from '../components/Button';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import quizData from '../data/quizData.json';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { Card, CardContent } from "../components/Card";
+import { Button } from "../components/Button";
+import { ChevronRight, ChevronLeft } from "lucide-react";
+import quizData from "../data/quizData.json";
 
 // Constants
 const ITEMS_PER_PAGE = 10;
-const BUTTON_HEIGHT = "h-[48px]";
-const CONTENT_HEIGHT = "min-h-[600px]";
+const BUTTON_HEIGHT = "h-12";
+const CONTENT_HEIGHT = "min-h-screen";
 
 interface QuizTopic {
   id: string;
   title: string;
-  chapter: string;
+  chapter: number;
   questions: any[]; // You can define a more specific type if needed
 }
 
@@ -26,9 +26,9 @@ const HomePage: React.FC = () => {
   const { department } = useParams<{ department: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Get page from URL or default to 1
-  const initialPage = Number(searchParams.get('page')) || 1;
+  const initialPage = Number(searchParams.get("page")) || 1;
   const [currentPage, setCurrentPage] = useState(initialPage);
 
   // Total pages calculation
@@ -38,7 +38,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (currentPage < 1 || currentPage > totalPages) {
       setCurrentPage(1);
-      setSearchParams({ page: '1' });
+      setSearchParams({ page: "1" });
     }
   }, [currentPage, totalPages, setSearchParams]);
 
@@ -62,13 +62,13 @@ const HomePage: React.FC = () => {
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
   const handlePrevPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   };
 
@@ -106,13 +106,15 @@ const HomePage: React.FC = () => {
             <Button
               key={`${currentPage}-${topic.id || `topic-${index}`}`}
               className={`w-full text-sm transition-all duration-300 ${BUTTON_HEIGHT} ${
-                'isEmpty' in topic
+                "isEmpty" in topic
                   ? "opacity-0 pointer-events-none"
                   : "bg-[#103C6E] text-white"
               }`}
-              onClick={() => !('isEmpty' in topic) && handleTopicSelect(topic.id)}
+              onClick={() =>
+                !("isEmpty" in topic) && handleTopicSelect(topic.id)
+              }
             >
-              {'isEmpty' in topic ? null : (
+              {"isEmpty" in topic ? null : (
                 <div className="w-full px-2 overflow-hidden">
                   <div className="text-center line-clamp-2 leading-5">
                     <span style={{ direction: "rtl" }}>

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '../components/Card';
-import { Button } from '../components/Button';
-import { Check, X, ArrowLeft, Home } from 'lucide-react';
-import quizData from '../data/quizData.json';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "../components/Card";
+import { Button } from "../components/Button";
+import { Check, X, ArrowLeft, Home } from "lucide-react";
+import quizData from "../data/quizData.json";
 
 interface Question {
   question: string;
@@ -12,7 +12,10 @@ interface Question {
   explanation: string;
 }
 
-const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({ onClick, text = "" }) => (
+const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({
+  onClick,
+  text = "",
+}) => (
   <Button
     onClick={onClick}
     className="flex items-center gap-2 bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300"
@@ -23,7 +26,10 @@ const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({ onClick,
 );
 
 const QuizPage: React.FC = () => {
-  const { department, topicId } = useParams<{ department: string; topicId: string }>();
+  const { department, topicId } = useParams<{
+    department: string;
+    topicId: string;
+  }>();
   const navigate = useNavigate();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -32,24 +38,29 @@ const QuizPage: React.FC = () => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([]);
-  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
+  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(
+    null
+  );
 
   // Load and prepare questions based on topicId
   useEffect(() => {
     let questionsToUse: Question[] = [];
 
-    if (topicId === 'random') {
+    if (topicId === "random") {
       // Get all questions from all topics
-      const allQuestions = quizData.quizTopics.reduce<Question[]>((acc, topic) => {
-        return [...acc, ...topic.questions];
-      }, []);
+      const allQuestions = quizData.quizTopics.reduce<Question[]>(
+        (acc, topic) => {
+          return [...acc, ...topic.questions];
+        },
+        []
+      );
 
       // Randomly select 10 questions
       const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
       questionsToUse = shuffled.slice(0, 10);
     } else {
       // Find the specific topic
-      const topic = quizData.quizTopics.find(t => t.id === topicId);
+      const topic = quizData.quizTopics.find((t) => t.id === topicId);
       if (!topic) {
         // If topic not found, redirect to department home
         navigate(`/${department}`);
@@ -96,7 +107,7 @@ const QuizPage: React.FC = () => {
     } else {
       // Navigate to finish page with score
       navigate(`/${department}/quiz/${topicId}/finish`, {
-        state: { score: Math.round((score / shuffledQuestions.length) * 100) }
+        state: { score: Math.round((score / shuffledQuestions.length) * 100) },
       });
     }
   };
@@ -110,16 +121,19 @@ const QuizPage: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto">
       <Card className="bg-[var(--page-background-color)] overflow-hidden">
-      <div id="question-header" className="bg-[#103C6E] p-1">
-        <div className="flex justify-between items-center flex-row px-5">
-          <div className="text-sm font-medium text-white">
-            שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
-          </div>
-          <div className="w-8 h-8 flex items-center justify-center cursor-pointer hover:opacity-80" onClick={handleHome}>
-            <Home className="w-5 h-5 text-white" />
+        <div id="question-header" className="bg-[#103C6E] p-1">
+          <div className="flex justify-between items-center flex-row px-5">
+            <div className="text-sm font-medium text-white">
+              שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
+            </div>
+            <div
+              className="w-8 h-8 flex items-center justify-center cursor-pointer hover:opacity-80"
+              onClick={handleHome}
+            >
+              <Home className="w-5 h-5 text-white" />
+            </div>
           </div>
         </div>
-      </div>
 
         <CardContent className="p-6">
           <div className="mb-8">

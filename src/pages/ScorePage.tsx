@@ -1,16 +1,16 @@
-import React from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '../components/Card';
-import { Button } from '../components/Button';
-import { Trophy, Star, Home } from 'lucide-react';
+import React from "react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+import { Card, CardContent } from "../components/Card";
+import { Button } from "../components/Button";
+import { Trophy, Star, Home } from "lucide-react";
 
 interface LocationState {
   score: number;
 }
 
-const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({ 
-  onClick, 
-  text = "" 
+const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({
+  onClick,
+  text = "",
 }) => (
   <Button
     onClick={onClick}
@@ -28,7 +28,7 @@ const ScorePage: React.FC = () => {
   const state = location.state as LocationState;
 
   // If no score in state, redirect to department home
-  if (!state?.score) {
+  if (typeof state?.score !== "number") {
     navigate(`/${department}`);
     return null;
   }
@@ -74,7 +74,7 @@ const ScorePage: React.FC = () => {
             className="h-full bg-[#103C6E] rounded-full transition-all duration-1000 ease-out"
             style={{
               width: `${score}%`,
-              boxShadow: '0 0 8px #103C6E',
+              boxShadow: "0 0 8px #103C6E",
             }}
           />
         </div>
@@ -92,15 +92,12 @@ const ScorePage: React.FC = () => {
           {getMessage(score)}
         </div>
 
-        <div 
-          id="home-button-container" 
+        <div
+          id="home-button-container"
           className="bg-[#103C6E] rounded-[15px] py-3 px-6 flex items-center justify-center"
-          style={{marginTop: '50px'}}
+          style={{ marginTop: "50px" }}
         >
-          <HomeButton
-            onClick={handleHome}
-            text="חזור לתפריט הראשי"            
-          />
+          <HomeButton onClick={handleHome} text="חזור לתפריט הראשי" />
         </div>
       </CardContent>
     </Card>
