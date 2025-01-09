@@ -15,7 +15,7 @@ const App: React.FC = () => {
     <HashRouter>
       <div className="flex flex-col items-center min-h-screen w-full max-w-[700px] mx-auto">
         <Header />
-        <main className="w-full flex-grow bg-[var(--main-content-background-color)] border border-[var(--border-color)] overflow-y-auto text-center h-[calc(92dvh-45px)]">
+        <main className="w-full flex-grow bg-[var(--main-content-background-color)] border border-[var(--border-color)] overflow-y-auto text-center h-[calc(100dvh-50px)]">
           <div dir="rtl">
             <Routes>
               {/* Redirect root to /er */}

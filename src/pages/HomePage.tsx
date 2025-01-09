@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
           </div>
 
           <Button
-            className={`w-full text-base bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
+            className={`w-full text-base bg-[#103C6E] text-white transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
             onClick={() => handleTopicSelect("random")}
           >
             <div className="w-full text-center" dir="ltr">
@@ -108,7 +108,7 @@ const HomePage: React.FC = () => {
               className={`w-full text-sm transition-all duration-300 ${BUTTON_HEIGHT} ${
                 'isEmpty' in topic
                   ? "opacity-0 pointer-events-none"
-                  : "bg-[var(--buttons-background-color)] text-[var(--buttons-color)]"
+                  : "bg-[#103C6E] text-white"
               }`}
               onClick={() => !('isEmpty' in topic) && handleTopicSelect(topic.id)}
             >
@@ -132,7 +132,7 @@ const HomePage: React.FC = () => {
             <Button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className="bg-[var(--buttons-background-color)] text-[var(--buttons-color)] flex items-center gap-1 px-2 text-sm h-8"
+              className="bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8"
             >
               <ChevronRight className="w-3 h-3" />
               הקודם
@@ -145,7 +145,7 @@ const HomePage: React.FC = () => {
             <Button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className="bg-[var(--buttons-background-color)] text-[var(--buttons-color)] flex items-center gap-1 px-2 text-sm h-8"
+              className="bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8"
             >
               הבא
               <ChevronLeft className="w-3 h-3" />

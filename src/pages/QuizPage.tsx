@@ -108,16 +108,18 @@ const QuizPage: React.FC = () => {
   if (shuffledQuestions.length === 0 || !shuffledAnswers.length) return null;
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
-      <Card className="bg-[var(--page-background-color)] rounded-lg overflow-hidden">
-        <div className="bg-[var(--header-background)] p-4 border-b border-[var(--border-color)]">
-          <div className="flex justify-between items-center flex-row">
-            <div className="text-sm font-medium text-[var(--header-text-color)]">
-              שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
-            </div>
-            <HomeButton onClick={handleHome} />
+    <div className="max-w-3xl mx-auto">
+      <Card className="bg-[var(--page-background-color)] overflow-hidden">
+      <div id="question-header" className="bg-[#103C6E] p-1">
+        <div className="flex justify-between items-center flex-row px-5">
+          <div className="text-sm font-medium text-white">
+            שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
+          </div>
+          <div className="w-8 h-8 flex items-center justify-center cursor-pointer hover:opacity-80" onClick={handleHome}>
+            <Home className="w-5 h-5 text-white" />
           </div>
         </div>
+      </div>
 
         <CardContent className="p-6">
           <div className="mb-8">
@@ -169,7 +171,7 @@ const QuizPage: React.FC = () => {
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={handleNextQuestion}
-                  className="bg-[var(--buttons-background-color)] text-[var(--buttons-color)] px-6 py-2 rounded-lg flex items-center gap-2"
+                  className="bg-[#103C6E] text-[var(--buttons-color)] px-6 py-2 rounded-lg flex items-center gap-2"
                 >
                   {currentQuestion + 1 === shuffledQuestions.length
                     ? "סיים"

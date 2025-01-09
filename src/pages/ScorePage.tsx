@@ -14,7 +14,7 @@ const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({
 }) => (
   <Button
     onClick={onClick}
-    className="score-home-button transform hover:scale-105 transition-transform duration-200"
+    className="text-white flex items-center gap-2 transform hover:opacity-80 transition-all duration-200"
   >
     <Home className="w-4 h-4" />
     {text && <span>{text}</span>}
@@ -63,7 +63,7 @@ const ScorePage: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <div className="text-6xl font-bold text-[var(--buttons-background-color)] transform transition-transform duration-200">
+          <div className="text-6xl font-bold text-[#103C6E] transform transition-transform duration-200">
             {score}
           </div>
           <div className="text-sm text-[var(--header-text-color)]">נקודות</div>
@@ -71,10 +71,10 @@ const ScorePage: React.FC = () => {
 
         <div className="w-full h-4 bg-[var(--header-background)] rounded-full p-1 border border-[var(--border-color)]">
           <div
-            className="h-full bg-[var(--buttons-background-color)] rounded-full transition-all duration-1000 ease-out"
+            className="h-full bg-[#103C6E] rounded-full transition-all duration-1000 ease-out"
             style={{
               width: `${score}%`,
-              boxShadow: "0 0 8px var(--buttons-background-color)",
+              boxShadow: '0 0 8px #103C6E',
             }}
           />
         </div>
@@ -92,10 +92,14 @@ const ScorePage: React.FC = () => {
           {getMessage(score)}
         </div>
 
-        <div className="flex justify-center gap-4 pt-4">
+        <div 
+          id="home-button-container" 
+          className="bg-[#103C6E] rounded-[15px] py-3 px-6 flex items-center justify-center"
+          style={{marginTop: '50px'}}
+        >
           <HomeButton
             onClick={handleHome}
-            text="חזור לתפריט"            
+            text="חזור לתפריט הראשי"            
           />
         </div>
       </CardContent>
