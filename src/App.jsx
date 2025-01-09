@@ -384,9 +384,16 @@ const App = () => {
 
   return (
     <div className="flex flex-col items-center min-h-screen w-full max-w-[700px] mx-auto">
-      {/* Rest of your existing App component code */}
       <header className="w-full h-[50px] bg-[var(--header-background)] border border-[var(--border-color)] flex justify-between items-center">
-        {/* ... existing header code ... */}
+        <img
+          src="/assets/IconOnly_mashlomme.png"
+          alt="Emek Logo"
+          className="h-[42px] w-[80px] rounded-[50px] object-contain"
+        />
+        <span className="flex-1 text-[var(--header-text-color)] text-center font-semibold text-[13px] font-helvetica">
+          mashlom.me - כלי עזר לצוות רפואה
+        </span>
+        <div className="w-[80px]" />
       </header>
 
       <main className="w-full flex-grow bg-[var(--main-content-background-color)] border border-[var(--border-color)] overflow-y-auto text-center h-[calc(92dvh-45px)]">
@@ -409,5 +416,4 @@ const App = () => {
     </div>
   );
 };
-
 export default App;
