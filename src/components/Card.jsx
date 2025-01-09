@@ -10,7 +10,7 @@ const Card = ({ children, className = "", ...props }) => {
 
 const CardContent = ({ children, className = "", ...props }) => {
   return (
-    <div className={`p-6 mb-[50px] ${className}`} {...props}>
+    <div className={`p-6 mb-[100px] ${className}`} {...props}>
       {children}
     </div>
   );
