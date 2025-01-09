@@ -1,14 +1,14 @@
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React from "react";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Import components
-import Header from './components/Header';
-import HomePage from './pages/HomePage';
-import QuizPage from './pages/QuizPage';
-import ScorePage from './pages/ScorePage';
+import Header from "./components/Header";
+import HomePage from "./pages/HomePage";
+import QuizPage from "./pages/QuizPage";
+import ScorePage from "./pages/ScorePage";
 
 // Import styles
-import './commoncss/global.css';
+import "./commoncss/global.css";
 
 const App: React.FC = () => {
   return (
@@ -20,16 +20,19 @@ const App: React.FC = () => {
             <Routes>
               {/* Redirect root to /er */}
               <Route path="/" element={<Navigate to="/er" replace />} />
-              
+
               {/* Department home page */}
               <Route path="/:department" element={<HomePage />} />
-              
+
               {/* Quiz page */}
               <Route path="/:department/quiz/:topicId" element={<QuizPage />} />
-              
+
               {/* Score page */}
-              <Route path="/:department/quiz/:topicId/finish" element={<ScorePage />} />
-              
+              <Route
+                path="/:department/quiz/:topicId/finish"
+                element={<ScorePage />}
+              />
+
               {/* Catch all other routes and redirect to /er */}
               <Route path="*" element={<Navigate to="/er" replace />} />
             </Routes>

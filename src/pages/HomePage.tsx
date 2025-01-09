@@ -8,7 +8,7 @@ import quizData from "../data/quizData.json";
 // Constants
 const ITEMS_PER_PAGE = 10;
 const BUTTON_HEIGHT = "h-12";
-const CONTENT_HEIGHT = "min-h-screen";
+const CONTENT_HEIGHT = "min-h-[90vh]";
 
 interface QuizTopic {
   id: string;
