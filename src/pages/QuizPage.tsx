@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
-import { Button } from "../components/Button";
+import { Button, HomeButton } from "../components/Button";
 import { Check, X, ArrowLeft, Home } from "lucide-react";
 import quizData from "../data/quizData.json";
 
@@ -11,19 +11,6 @@ interface Question {
   correct: number;
   explanation: string;
 }
-
-const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({
-  onClick,
-  text = "",
-}) => (
-  <Button
-    onClick={onClick}
-    className="flex items-center gap-2 bg-[var(--buttons-background-color)] text-[var(--buttons-color)] transition-all duration-300"
-  >
-    <Home className="w-4 h-4" />
-    {text && <span>{text}</span>}
-  </Button>
-);
 
 const QuizPage: React.FC = () => {
   const { department, topicId } = useParams<{
@@ -126,12 +113,10 @@ const QuizPage: React.FC = () => {
             <div className="text-sm font-medium text-white">
               שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
             </div>
-            <div
-              className="w-8 h-8 flex items-center justify-center cursor-pointer hover:opacity-80"
+            <HomeButton
               onClick={handleHome}
-            >
-              <Home className="w-5 h-5 text-white" />
-            </div>
+              className="flex items-center justify-center p-2 text-white hover:text-gray-200 transition-colors duration-200"
+            />
           </div>
         </div>
 

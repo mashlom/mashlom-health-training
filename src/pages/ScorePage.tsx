@@ -1,25 +1,12 @@
 import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
-import { Button } from "../components/Button";
+import { Button, HomeButton } from "../components/Button";
 import { Trophy, Star, Home } from "lucide-react";
 
 interface LocationState {
   score: number;
 }
-
-const HomeButton: React.FC<{ onClick: () => void; text?: string }> = ({
-  onClick,
-  text = "",
-}) => (
-  <Button
-    onClick={onClick}
-    className="text-white flex items-center gap-2 transform hover:opacity-80 transition-all duration-200"
-  >
-    <Home className="w-4 h-4" />
-    {text && <span>{text}</span>}
-  </Button>
-);
 
 const ScorePage: React.FC = () => {
   const { department } = useParams<{ department: string }>();
@@ -92,13 +79,11 @@ const ScorePage: React.FC = () => {
           {getMessage(score)}
         </div>
 
-        <div
-          id="home-button-container"
-          className="bg-[#103C6E] rounded-[15px] py-3 px-6 flex items-center justify-center"
-          style={{ marginTop: "50px" }}
-        >
-          <HomeButton onClick={handleHome} text="חזור לתפריט הראשי" />
-        </div>
+        <HomeButton
+          onClick={handleHome}
+          text="חזור לתפריט הראשי"
+          className="w-full text-white flex items-center justify-center gap-2 transform hover:opacity-80 transition-all duration-200 bg-[#103C6E] rounded-[15px] py-3 px-6"
+        />
       </CardContent>
     </Card>
   );
