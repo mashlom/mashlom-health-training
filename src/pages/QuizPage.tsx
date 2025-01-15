@@ -108,7 +108,7 @@ const QuizPage: React.FC = () => {
   return (
     <div className="max-w-3xl mx-auto">
       <Card className="overflow-hidden">
-        <div id="question-header" className="bg-[#103C6E] p-1">
+        <div id="question-header" className="bg-[var(--page-font-color)] p-1">
           <div className="flex justify-between items-center flex-row px-5">
             <div className="text-sm font-medium text-white">
               שאלה {currentQuestion + 1} מתוך {shuffledQuestions.length}
@@ -134,14 +134,14 @@ const QuizPage: React.FC = () => {
                 key={index}
                 onClick={() => !showAnswer && handleAnswer(index)}
                 disabled={showAnswer}
-                className={`w-full min-h-[3.5rem] px-4 py-3 text-right rounded-lg border border-[var(--border-color)] ${
+                className={`w-full min-h-[3.5rem] px-4 py-3 text-right rounded-lg border ${
                   showAnswer
                     ? index === correctAnswerIndex
                       ? "bg-green-100 border-green-300 text-[var(--page-font-color)]"
                       : selectedAnswer === index
                       ? "bg-[#fff0f0] border-[#ff9999] text-[var(--page-font-color)]"
-                      : "bg-[var(--header-background)] text-[var(--page-font-color)] opacity-50"
-                    : "bg-[var(--header-background)] text-[var(--page-font-color)] hover:opacity-80"
+                      : "bg-white border-gray-200 text-[var(--page-font-color)] opacity-50"
+                    : "bg-white border-gray-200 text-[var(--page-font-color)] hover:bg-gray-50"
                 } transition-colors duration-200 focus:outline-none`}
               >
                 <div className="flex justify-between items-center">
@@ -171,7 +171,7 @@ const QuizPage: React.FC = () => {
               <div className="flex justify-end pt-4">
                 <Button
                   onClick={handleNextQuestion}
-                  className="bg-[#103C6E] text-[var(--buttons-color)] px-6 py-2 rounded-lg flex items-center gap-2"
+                  className="bg-[var(--page-font-color)] text-[var(--buttons-color)] px-6 py-2 rounded-lg flex items-center gap-2"
                 >
                   {currentQuestion + 1 === shuffledQuestions.length
                     ? "סיים"

@@ -91,7 +91,7 @@ const HomePage: React.FC = () => {
           </div>
 
           <Button
-            className={`w-full text-base bg-[#103C6E] text-white transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
+            className={`w-full text-base bg-[var(--page-font-color)] text-white transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
             onClick={() => handleTopicSelect("random")}
           >
             <div className="w-full text-right">שאלות על כל החומר</div>
@@ -106,7 +106,7 @@ const HomePage: React.FC = () => {
               className={`w-full text-sm transition-all duration-300 ${BUTTON_HEIGHT} ${
                 "isEmpty" in topic
                   ? "opacity-0 pointer-events-none"
-                  : "bg-[#103C6E] text-white"
+                  : "bg-[var(--page-font-color)] text-white"
               }`}
               onClick={() =>
                 !("isEmpty" in topic) && handleTopicSelect(topic.id)
@@ -132,7 +132,7 @@ const HomePage: React.FC = () => {
             <Button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className={`bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8 ${
+              className={`bg-[var(--page-font-color)] text-white flex items-center gap-1 px-2 text-sm h-8 ${
                 currentPage === 1 ? "opacity-50 pointer-events-none" : ""
               }`}
             >
@@ -147,7 +147,7 @@ const HomePage: React.FC = () => {
             <Button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className={`bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8 ${
+              className={`bg-[var(--page-font-color)] text-white flex items-center gap-1 px-2 text-sm h-8 ${
                 currentPage === totalPages
                   ? "opacity-50 pointer-events-none"
                   : ""
