@@ -2,7 +2,7 @@ import React from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button, HomeButton } from "../components/Button";
-import { Trophy, Star, Home } from "lucide-react";
+import { Trophy, Star } from "lucide-react";
 
 interface LocationState {
   score: number;
@@ -41,7 +41,7 @@ const ScorePage: React.FC = () => {
   };
 
   return (
-    <Card className="max-w-lg mx-auto mt-8 bg-[var(--page-background-color)]">
+    <Card className="max-w-lg mx-auto mt-8 ">
       <CardContent className="p-6 text-center space-y-6">
         <div className="flex justify-center">
           <div className="w-20 h-20 rounded-full bg-[var(--header-background)] border-4 border-[var(--border-color)] flex items-center justify-center shadow-lg transform transition-transform duration-200">

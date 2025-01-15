@@ -77,7 +77,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <Card className="max-w-lg mx-auto mt-4 mb-4 bg-[var(--page-background-color)] border-[var(--border-color)]">
+    <Card className="max-w-lg mx-auto mt-4 mb-4  border-[var(--border-color)]">
       <CardContent className={`p-4 flex flex-col ${CONTENT_HEIGHT}`}>
         {/* Header Section */}
         <div className="mb-4">
@@ -94,9 +94,7 @@ const HomePage: React.FC = () => {
             className={`w-full text-base bg-[#103C6E] text-white transition-all duration-300 mb-3 ${BUTTON_HEIGHT}`}
             onClick={() => handleTopicSelect("random")}
           >
-            <div className="w-full text-center" dir="ltr">
-              שאלות על כל החומר
-            </div>
+            <div className="w-full text-right">שאלות על כל החומר</div>
           </Button>
         </div>
 
@@ -116,7 +114,7 @@ const HomePage: React.FC = () => {
             >
               {"isEmpty" in topic ? null : (
                 <div className="w-full px-2 overflow-hidden">
-                  <div className="text-center line-clamp-2 leading-5">
+                  <div className="text-right line-clamp-2 leading-5">
                     <span style={{ direction: "rtl" }}>
                       פרק {topic.chapter} -{" "}
                     </span>
@@ -134,7 +132,9 @@ const HomePage: React.FC = () => {
             <Button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className="bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8"
+              className={`bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8 ${
+                currentPage === 1 ? "opacity-50 pointer-events-none" : ""
+              }`}
             >
               <ChevronRight className="w-3 h-3" />
               הקודם
@@ -147,7 +147,11 @@ const HomePage: React.FC = () => {
             <Button
               onClick={handleNextPage}
               disabled={currentPage === totalPages}
-              className="bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8"
+              className={`bg-[#103C6E] text-white flex items-center gap-1 px-2 text-sm h-8 ${
+                currentPage === totalPages
+                  ? "opacity-50 pointer-events-none"
+                  : ""
+              }`}
             >
               הבא
               <ChevronLeft className="w-3 h-3" />

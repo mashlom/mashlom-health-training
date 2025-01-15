@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button, HomeButton } from "../components/Button";
-import { Check, X, ArrowLeft, Home } from "lucide-react";
+import { Check, X, ArrowLeft } from "lucide-react";
 import quizData from "../data/quizData.json";
 
 interface Question {
@@ -107,7 +107,7 @@ const QuizPage: React.FC = () => {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <Card className="bg-[var(--page-background-color)] overflow-hidden">
+      <Card className="overflow-hidden">
         <div id="question-header" className="bg-[#103C6E] p-1">
           <div className="flex justify-between items-center flex-row px-5">
             <div className="text-sm font-medium text-white">
@@ -115,7 +115,8 @@ const QuizPage: React.FC = () => {
             </div>
             <HomeButton
               onClick={handleHome}
-              className="flex items-center justify-center p-2 text-white hover:text-gray-200 transition-colors duration-200"
+              className="flex items-center justify-center gap-2 p-2 text-white hover:text-gray-200 transition-colors duration-200"
+              text="חזרה לעמוד השאלות"
             />
           </div>
         </div>
@@ -139,7 +140,7 @@ const QuizPage: React.FC = () => {
                       ? "bg-green-100 border-green-300 text-[var(--page-font-color)]"
                       : selectedAnswer === index
                       ? "bg-[#fff0f0] border-[#ff9999] text-[var(--page-font-color)]"
-                      : "bg-[var(--header-background)] text-[var(--page-font-color)]"
+                      : "bg-[var(--header-background)] text-[var(--page-font-color)] opacity-50"
                     : "bg-[var(--header-background)] text-[var(--page-font-color)] hover:opacity-80"
                 } transition-colors duration-200 focus:outline-none`}
               >
@@ -158,7 +159,7 @@ const QuizPage: React.FC = () => {
 
           {showAnswer && (
             <div className="mt-8 space-y-6">
-              <div className="bg-[var(--header-background)] p-4 rounded-lg border border-[var(--buttons-background-color)]">
+              <div className="bg-green-100 p-4 rounded-lg border border-green-300">
                 <h3 className="font-semibold text-[var(--page-font-color)] mb-2">
                   הסבר:
                 </h3>
