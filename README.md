@@ -1,4 +1,4 @@
-while on the questions pageyou can do these commands:
+while on the questions page you can do these commands:
 
 // To switch to MongoDB
 window.toggleDataSource(true)
