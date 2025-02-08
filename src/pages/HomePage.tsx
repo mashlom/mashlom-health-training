@@ -31,8 +31,11 @@ const HomePage: React.FC = () => {
   const initialPage = Number(searchParams.get("page")) || 1;
   const [currentPage, setCurrentPage] = useState(initialPage);
 
+  // Sort quiz topics by chapter number
+  const sortedQuizTopics = [...quizData.quizTopics].sort((a, b) => a.chapter - b.chapter);
+
   // Total pages calculation
-  const totalPages = Math.ceil(quizData.quizTopics.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedQuizTopics.length / ITEMS_PER_PAGE);
 
   // Ensure page number is valid
   useEffect(() => {
@@ -49,7 +52,7 @@ const HomePage: React.FC = () => {
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentTopics = quizData.quizTopics.slice(startIndex, endIndex);
+  const currentTopics = sortedQuizTopics.slice(startIndex, endIndex);
 
   // Fill remaining slots with empty topics
   const filledTopics: (QuizTopic | EmptyTopic)[] = [...currentTopics];

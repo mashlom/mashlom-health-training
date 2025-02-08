@@ -90,7 +90,7 @@ const QuizPage: React.FC = () => {
       if (useMongoDB) {
         const baseUrl = config.REACT_APP_API_BASE_URL;
         const endpoint = topicId === "random" ? "random" : `topics/${topicId}`;
-        const response = await fetch(`${baseUrl}/api/quiz/${endpoint}`);
+        const response = await fetch(`${baseUrl}/api/trainings/${endpoint}`);
         const data = await response.json();
 
         if (!response.ok) {

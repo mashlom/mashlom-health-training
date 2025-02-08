@@ -6,7 +6,7 @@ const environments = {
     },
     staging: {
       REACT_APP_ENV: 'staging',
-      REACT_APP_API_BASE_URL: 'http://my-stg.mashlom.me'
+      REACT_APP_API_BASE_URL: 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net'
     }
   };
   
