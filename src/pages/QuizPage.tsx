@@ -4,7 +4,7 @@ import { Card, CardContent } from "../components/Card";
 import { Button, HomeButton } from "../components/Button";
 import { Check, X, ArrowLeft } from "lucide-react";
 import quizData from "../data/quizData.json";
-import { config } from "../config/env";
+import { getConfig } from "../config/env";
 // Remove the quizData import since we'll fetch from API
 
 interface Question {
@@ -27,6 +27,7 @@ const QuizPage: React.FC = () => {
     topicId: string;
   }>();
   const navigate = useNavigate();
+  const config = getConfig();
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
