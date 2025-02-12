@@ -3,9 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button, HomeButton } from "../components/Button";
 import { Check, X, ArrowLeft } from "lucide-react";
-import quizData from "../data/quizData.json";
-import { getConfig } from "../config/env";
-// Remove the quizData import since we'll fetch from API
+import { useTopics } from "../context/TopicsContext";
 
 interface Question {
   question: string;
@@ -14,20 +12,13 @@ interface Question {
   explanation: string;
 }
 
-declare global {
-  interface Window {
-    toggleDataSource?: (useMongo: boolean) => void;
-    getCurrentDataSource?: () => string;
-  }
-}
-
 const QuizPage: React.FC = () => {
   const { department, topicId } = useParams<{
     department: string;
     topicId: string;
   }>();
   const navigate = useNavigate();
-  const config = getConfig();
+  const { currentTopicQuestions, loading } = useTopics(topicId);
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -35,104 +26,16 @@ const QuizPage: React.FC = () => {
   const [showAnswer, setShowAnswer] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([]);
-  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(
-    null
-  );
-  const [useMongoDB, setUseMongoDB] = useState<boolean>(() => {
-    try {
-      const storedValue = localStorage.getItem("useMongoDBSource");
-      return storedValue === "true";
-    } catch {
-      return false;
-    }
-  });
+  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
 
-  // Define window functions type
-  interface CustomWindow extends Window {
-    toggleDataSource: (useMongo: boolean) => void;
-    getCurrentDataSource: () => string;
-  }
-
-  // Setup window functions immediately when component mounts
+  // Set up shuffled questions when topic questions are loaded
   useEffect(() => {
-    // Explicitly declare window with custom interface
-    const customWindow = window as unknown as CustomWindow;
-
-    // Define the functions
-    customWindow.toggleDataSource = (useMongo: boolean) => {
-      setUseMongoDB(useMongo);
-      try {
-        localStorage.setItem("useMongoDBSource", String(useMongo));
-      } catch (error) {
-        console.error("LocalStorage error:", error);
-      }
-      console.log(`Using ${useMongo ? "MongoDB" : "JSON"} data source`);
-    };
-
-    customWindow.getCurrentDataSource = () => {
-      return useMongoDB ? "MongoDB" : "JSON";
-    };
-
-    // Cleanup
-    return () => {
-      try {
-        delete (customWindow as any).toggleDataSource;
-        delete (customWindow as any).getCurrentDataSource;
-      } catch (error) {
-        console.error("Cleanup error:", error);
-      }
-    };
-  }, [useMongoDB]); // Include useMongoDB in dependencies
-
-  const fetchQuestions = async () => {
-    try {
-      let questionsToUse: Question[] = [];
-
-      if (useMongoDB) {
-        const baseUrl = config.REACT_APP_API_BASE_URL;
-        const endpoint = topicId === "random" ? "random" : `topics/${topicId}`;
-        const response = await fetch(`${baseUrl}/api/trainings/${endpoint}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-          console.error("Error fetching questions:", data);
-          return;
-        }
-
-        questionsToUse = topicId === "random" ? data : data.questions;
-      } else {
-        if (topicId === "random") {
-          const allQuestions = quizData.quizTopics.reduce<Question[]>(
-            (acc, topic) => [...acc, ...topic.questions],
-            []
-          );
-          questionsToUse = [...allQuestions]
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 10);
-        } else {
-          const topic = quizData.quizTopics.find((t) => t.id === topicId);
-          if (!topic) {
-            navigate(`/${department}`);
-            return;
-          }
-          questionsToUse = topic.questions;
-        }
-      }
-
-      if (questionsToUse?.length > 0) {
-        setShuffledQuestions(
-          [...questionsToUse].sort(() => 0.5 - Math.random())
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching questions:", error);
+    if (currentTopicQuestions.length > 0) {
+      setShuffledQuestions([...currentTopicQuestions].sort(() => 0.5 - Math.random()));
     }
-  };
+  }, [currentTopicQuestions]);
 
-  useEffect(() => {
-    fetchQuestions();
-  }, [topicId, useMongoDB]);
-
+  // Set up shuffled answers for current question
   useEffect(() => {
     if (shuffledQuestions.length > 0) {
       const currentQ = shuffledQuestions[currentQuestion];
@@ -170,6 +73,10 @@ const QuizPage: React.FC = () => {
   const handleHome = () => {
     navigate(`/${department}`);
   };
+
+  if (loading) {
+    return <div className="text-center p-4">Loading...</div>;
+  }
 
   if (shuffledQuestions.length === 0 || !shuffledAnswers.length) return null;
 

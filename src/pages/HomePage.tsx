@@ -3,19 +3,12 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import { ChevronRight, ChevronLeft } from "lucide-react";
-import quizData from "../data/quizData.json";
+import { useTopics } from "../context/TopicsContext";
 
-// Constants
+// Constants remain the same
 const ITEMS_PER_PAGE = 10;
 const BUTTON_HEIGHT = "h-12";
 const CONTENT_HEIGHT = "min-h-[90vh]";
-
-interface QuizTopic {
-  id: string;
-  title: string;
-  chapter: number;
-  questions: any[]; // You can define a more specific type if needed
-}
 
 interface EmptyTopic {
   id: string;
@@ -26,13 +19,14 @@ const HomePage: React.FC = () => {
   const { department } = useParams<{ department: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { topics, loading } = useTopics();
 
   // Get page from URL or default to 1
   const initialPage = Number(searchParams.get("page")) || 1;
   const [currentPage, setCurrentPage] = useState(initialPage);
 
   // Sort quiz topics by chapter number
-  const sortedQuizTopics = [...quizData.quizTopics].sort((a, b) => a.chapter - b.chapter);
+  const sortedQuizTopics = [...topics].sort((a, b) => a.chapter - b.chapter);
 
   // Total pages calculation
   const totalPages = Math.ceil(sortedQuizTopics.length / ITEMS_PER_PAGE);
@@ -55,7 +49,7 @@ const HomePage: React.FC = () => {
   const currentTopics = sortedQuizTopics.slice(startIndex, endIndex);
 
   // Fill remaining slots with empty topics
-  const filledTopics: (QuizTopic | EmptyTopic)[] = [...currentTopics];
+  const filledTopics: (typeof topics[0] | EmptyTopic)[] = [...currentTopics];
   while (filledTopics.length < ITEMS_PER_PAGE) {
     filledTopics.push({
       id: `empty-${currentPage}-${filledTopics.length}`,
@@ -79,9 +73,14 @@ const HomePage: React.FC = () => {
     navigate(`/${department}/quiz/${topicId}`);
   };
 
+  if (loading) {
+    return <div className="text-center p-4">Loading...</div>;
+  }
+
   return (
-    <Card className="max-w-lg mx-auto mt-4 mb-4  border-[var(--border-color)]">
+    <Card className="max-w-lg mx-auto mt-4 mb-4 border-[var(--border-color)]">
       <CardContent className={`p-4 flex flex-col ${CONTENT_HEIGHT}`}>
+        {/* Rest of the JSX remains exactly the same */}
         {/* Header Section */}
         <div className="mb-4">
           <h1 className="text-xl font-bold text-center mb-2 text-[var(--page-font-color)]">

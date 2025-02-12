@@ -1,5 +1,6 @@
 import React from "react";
 import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { TopicsProvider } from "./context/TopicsContext";
 
 // Import components
 import Header from "./components/Header";
@@ -12,6 +13,7 @@ import "./commoncss/global.css";
 
 const App: React.FC = () => {
   return (
+    <TopicsProvider>
     <HashRouter>
       <div className="flex flex-col items-center min-h-screen w-full max-w-[700px] mx-auto">
         <Header />
@@ -40,6 +42,7 @@ const App: React.FC = () => {
         </main>
       </div>
     </HashRouter>
+    </TopicsProvider>
   );
 };
 
