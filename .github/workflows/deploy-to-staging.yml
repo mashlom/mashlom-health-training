@@ -21,13 +21,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
+          # cache: 'npm'
+
+      - name: Set base path for staging
+        run: echo "VITE_BASE_PATH=/pr/${{ github.event.number }}" >> $GITHUB_ENV
 
       - name: Install dependencies and build
         run: |
-          echo "VITE_BASE_PATH=/pr/${{ github.event.number }}/" > .env
           npm ci
           npm run build
+      # - name: Install dependencies and build
+      #   run: |
+      #     echo "VITE_BASE_PATH=/pr/${{ github.event.number }}/" > .env
+      #     npm ci
+      #     npm run build
+
+      # - name: Debug Environment Variable # Debugging purposes
+      #   run: cat .env.production
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
