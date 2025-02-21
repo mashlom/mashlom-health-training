@@ -1,38 +1,34 @@
-name: Deploy PR
-run-name: Deploy PR
+name: Deploy to Staging
 
 on:
   pull_request:
-    types: ['opened', 'synchronize']
-    branches: ['main']
+    branches: [main]
 
-# Sets permissions of the GITHUB_TOKEN
 permissions:
   contents: write
-  pull-requests: write
   pages: write
   id-token: write
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
-      - name: Build App
+      - name: Install dependencies and build
         run: |
           echo "VITE_BASE_PATH=/pr/${{ github.event.number }}/" > .env
           npm ci
           npm run build
 
-      - name: Setup Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
@@ -41,15 +37,13 @@ jobs:
           path: 'dist'
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
         with:
           preview: true
 
-      - name: Add PR Comment
+      - name: Comment on PR with staging link
         uses: mshick/add-pr-comment@v2
         with:
           message: |
-            🚀 Preview deployment is ready!
-
+            🚀 Staging deployment is ready!
             Visit: https://trainings.mashlom.me/pr/${{ github.event.number }}/#/er
