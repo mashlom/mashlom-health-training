@@ -33,9 +33,7 @@ jobs:
         run: |
           npm run build
           mkdir -p dist/pr/${{ github.event.number }}
-          cp public/404.html dist/
           mv dist/* dist/pr/${{ github.event.number }}/ 2>/dev/null || true
-          mv dist/pr/${{ github.event.number }}/404.html dist/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
