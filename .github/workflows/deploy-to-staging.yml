@@ -31,8 +31,9 @@ jobs:
         run: |
           echo "VITE_BASE_PATH=/pr/${{ github.event.number }}/" > .env
           npm run build
-          # Ensure we move the contents correctly into the desired directory
+          # Create the target directory for the PR build
           mkdir -p dist/pr/${{ github.event.number }}
+          # Move the contents of dist/ to the correct PR folder (not dist itself)
           mv dist/* dist/pr/${{ github.event.number }}/
 
       - name: Configure GitHub Pages
