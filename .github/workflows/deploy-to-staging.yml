@@ -11,13 +11,13 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages-staging'
+  group: "pages-staging"
   cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     environment:
-      name: github-pages
+      name: github-pages-staging  # Changed to a separate environment
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
