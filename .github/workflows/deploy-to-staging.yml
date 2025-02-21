@@ -1,59 +1,46 @@
-name: Deploy PR to Staging
-
+name: Deploy PR
+run-name: Deploy PR
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
-  workflow_dispatch:
-
+    types: ['opened', 'synchronize']
+    branches: ['main']
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages-staging"
-  cancel-in-progress: true
-
+  contents: write
+  pull-requests: write
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages-staging  # Changed to a separate environment
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Update Vite Config for Staging
+      - name: Build App
         run: |
-          echo "import { defineConfig } from 'vite';
-          import react from '@vitejs/plugin-react';
+          echo 'VITE_BASE_PATH=/pr/${{ github.event.number }}/' > .env
+          npm ci
+          npm run build
 
-          export default defineConfig({
-            base: '/staging/',
-            plugins: [react()],
-          });" > vite.config.ts
+      - name: Get GH Pages URL
+        id: pages
+        uses: actions/configure-pages@v5
 
-      - name: Build
-        run: npm run build
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: './dist'
+          folder: dist
+          target-folder: 'pr/${{ github.event.number }}'
+          branch: gh-pages # Make sure to specify the branch
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Add PR Comment
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            🚀 Deployed to ${{ steps.pages.outputs.base_url }}/pr/${{ github.event.number }}/
+
+            Preview your changes at this URL!
