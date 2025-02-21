@@ -59,7 +59,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Function to fetch data from MongoDB
   const fetchFromMongoDB = async () => {
     try {
-      const baseUrl = config.REACT_APP_API_BASE_URL;
+      const baseUrl = config.API_BASE_URL;
       const response = await fetch(`${baseUrl}/api/trainings/training-topic/test1`);
       
       if (!response.ok) {
@@ -128,7 +128,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => {
       window.removeEventListener('dataSourceChanged', handleDataSourceChange);
     };
-  }, [config.REACT_APP_API_BASE_URL]);
+  }, [config.API_BASE_URL]);
 
   return (
     <TopicsContext.Provider value={{ topics, loading, error }}>

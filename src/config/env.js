@@ -1,55 +1,125 @@
-// config.js
 const environments = {
   development: {
-    REACT_APP_ENV: 'development',
-    REACT_APP_API_BASE_URL: 'http://localhost:5000'
+    APP_ENV: 'development',
+    API_BASE_URL: 'http://localhost:5000'
   },
   staging: {
-    REACT_APP_ENV: 'staging',
-    REACT_APP_API_BASE_URL: 'https://mashlom-stg-api-gyefcpeqa3cnejfx.westus-01.azurewebsites.net'
+    APP_ENV: 'staging',
+    API_BASE_URL: 'https://mashlom-stg-api-gyefcpeqa3cnejfx.westus-01.azurewebsites.net'
   },
   production: {
-    REACT_APP_ENV: 'production',
-    REACT_APP_API_BASE_URL: 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net' // Add your production URL
+    APP_ENV: 'production',
+    API_BASE_URL: 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net'
   }
 };
 
-// Store the current environment
-let currentEnvironment = null;
+const getInitialEnvironment = () => {
+  // Check localStorage first
+  const savedEnv = localStorage.getItem('currentEnvironment');
+  if (savedEnv && environments[savedEnv]) {
+    return savedEnv;
+  }
 
-// Function to determine environment based on URL
-const getEnvironment = () => {
   const currentUrl = window.location.href.toLowerCase();
-  
+
   if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
-    return environments.development;
+    return 'development';
   }
-  
+
   if (currentUrl.includes('trainings.mashlom.me')) {
-    return environments.production;
+    return 'production';
   }
-  
-  return environments.development; // Default to development
+
+  return 'development';
 };
 
-// Function to set environment manually
-const setEnvironment = (env) => {
+// Initialize current environment from localStorage or default
+let currentConfig = environments[getInitialEnvironment()];
+
+// Initialize data source from localStorage or default to 'json'
+let currentDataSource = localStorage.getItem('currentDataSource') || 'json';
+
+// Extension message handler
+window.addEventListener('message', (event) => {
+  if (event.data.source !== 'mashlom-dev-tools') return;
+
+  switch (event.data.type) {
+    case 'GET_ENV':
+      window.postMessage({
+        source: 'mashlom-app',
+        type: 'ENV_STATUS',
+        data: {
+          current: currentConfig.APP_ENV,
+          available: Object.keys(environments)
+        }
+      }, '*');
+      break;
+
+    case 'SET_ENV':
+      const newEnv = event.data.env;
+      if (environments[newEnv]) {
+        currentConfig = environments[newEnv];
+        localStorage.setItem('currentEnvironment', newEnv);
+        console.log(`[Dev Tools] Switched to ${newEnv} environment`, currentConfig);
+        window.dispatchEvent(new CustomEvent('envChanged'));
+
+        window.postMessage({
+          source: 'mashlom-app',
+          type: 'ENV_CHANGED',
+          data: { current: newEnv }
+        }, '*');
+      }
+      break;
+
+    case 'GET_DATA_SOURCE':
+      window.postMessage({
+        source: 'mashlom-app',
+        type: 'DATA_SOURCE_STATUS',
+        data: { current: currentDataSource }
+      }, '*');
+      break;
+
+    case 'SET_DATA_SOURCE':
+      currentDataSource = event.data.dataSource;
+      localStorage.setItem('currentDataSource', currentDataSource);
+      console.log(`[Dev Tools] Switched to ${currentDataSource} data source`);
+      window.dispatchEvent(new CustomEvent('dataSourceChanged'));
+
+      window.postMessage({
+        source: 'mashlom-app',
+        type: 'DATA_SOURCE_CHANGED',
+        data: { current: currentDataSource }
+      }, '*');
+      break;
+  }
+});
+
+// Define window methods for controlling data source
+window.toggleDataSource = (useMongoDB) => {
+  const newDataSource = useMongoDB ? 'mongodb' : 'json';
+  localStorage.setItem('currentDataSource', newDataSource);
+  currentDataSource = newDataSource;
+  console.log(`Switched to ${currentDataSource} data source`);
+  window.dispatchEvent(new CustomEvent('dataSourceChanged'));
+};
+
+window.getCurrentDataSource = () => currentDataSource;
+
+// Keep legacy console methods for backward compatibility
+window.setEnv = (env) => {
   if (environments[env]) {
-    currentEnvironment = environments[env];
-    console.log(`Environment switched to: ${env}`, currentEnvironment);
-    return currentEnvironment;
+    currentConfig = environments[env];
+    localStorage.setItem('currentEnvironment', env);
+    console.log(`Environment switched to: ${env}`, currentConfig);
+    window.dispatchEvent(new CustomEvent('envChanged'));
+    return currentConfig;
   }
   console.error(`Invalid environment: ${env}. Available environments:`, Object.keys(environments));
   return null;
 };
 
-// Initialize environment
-currentEnvironment = getEnvironment();
-
-// Expose configuration control to console
-window.setEnv = setEnvironment;
-window.getEnv = () => currentEnvironment;
+window.getEnv = () => currentConfig;
 window.listEnvs = () => Object.keys(environments);
 
 // Export the configuration
-export const getConfig = () => currentEnvironment;
+export const getConfig = () => currentConfig;
