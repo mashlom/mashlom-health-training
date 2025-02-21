@@ -33,8 +33,9 @@ jobs:
           npm run build
           # Create the target directory for the PR build
           mkdir -p dist/pr/${{ github.event.number }}
-          # Move the contents of dist/ to the correct PR folder (not dist itself)
-          mv dist/* dist/pr/${{ github.event.number }}/
+          # Move all files inside dist, but not the dist/pr folder itself
+          shopt -s extglob
+          mv dist/!(pr) dist/pr/${{ github.event.number }}/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
