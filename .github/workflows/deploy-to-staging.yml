@@ -1,4 +1,4 @@
-name: Deploy to Staging
+name: Deploy Preview to GitHub Pages
 
 on:
   pull_request:
@@ -21,23 +21,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # cache: 'npm'
-
-      - name: Set base path for staging
-        run: echo "VITE_BASE_PATH=/pr/${{ github.event.number }}" >> $GITHUB_ENV
+          cache: 'npm'
 
       - name: Install dependencies and build
         run: |
           npm ci
           npm run build
-      # - name: Install dependencies and build
-      #   run: |
-      #     echo "VITE_BASE_PATH=/pr/${{ github.event.number }}/" > .env
-      #     npm ci
-      #     npm run build
-
-      # - name: Debug Environment Variable # Debugging purposes
-      #   run: cat .env.production
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
@@ -47,14 +36,15 @@ jobs:
         with:
           path: 'dist'
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Preview Mode)
+        id: deployment
         uses: actions/deploy-pages@v4
         with:
           preview: true
 
-      - name: Comment on PR with staging link
+      - name: Comment on PR with preview link
         uses: mshick/add-pr-comment@v2
         with:
           message: |
-            🚀 Staging deployment is ready!
-            Visit: https://trainings.mashlom.me/pr/${{ github.event.number }}/#/er
+            🚀 Preview deployment is ready!
+            Visit: ${{ steps.deployment.outputs.page_url }}
