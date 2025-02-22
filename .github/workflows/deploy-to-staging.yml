@@ -1,102 +1,65 @@
-name: Deploy to GitHub Pages
+name: Build Environments
 
 on:
-  # Trigger on PRs to main
   pull_request:
-    branches:
-      - main
-  # Trigger on pushes to main
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-  pull-requests: write
+    branches: [main]
 
 jobs:
-  build-and-deploy:
+  build-environments:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout PR branch
+        uses: actions/checkout@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          path: pr-branch
+          ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: Install dependencies
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          path: main-branch
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            pr-branch/package-lock.json
+            main-branch/package-lock.json
+
+      # Build main branch
+      - name: Install dependencies (main)
+        working-directory: main-branch
         run: npm ci
 
-      # Build PR preview if it's a PR
-      - name: Build PR preview
-        if: github.event_name == 'pull_request'
-        env:
-          VITE_BASE_PATH: /pr/${{ github.event.number }}/
-        run: |
-          npm run build
-          mkdir -p dist/pr/${{ github.event.number }}
-          mv dist/* dist/pr/${{ github.event.number }}/ 2>/dev/null || true
-
-      # Build main branch if it's a push to main
       - name: Build main
-        if: github.event_name == 'push'
+        working-directory: main-branch
         run: npm run build
 
-      # If this is a PR, fetch and build main branch as well
-      - name: Fetch and build main branch
-        if: github.event_name == 'pull_request'
+      # Build PR branch
+      - name: Install dependencies (PR)
+        working-directory: pr-branch
+        run: npm ci
+
+      - name: Build PR
+        working-directory: pr-branch
+        run: npm run build
+
+      # Organize dist folders
+      - name: Organize distributions
         run: |
-          # Store current branch name
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          mkdir -p combined-dist
+          cp -r main-branch/dist/* combined-dist/
+          mkdir -p combined-dist/staging
+          cp -r pr-branch/dist/* combined-dist/staging/
 
-          # Fetch and checkout main
-          git fetch origin main:main
-          git checkout main
-
-          # Build main branch
-          npm ci
-          npm run build
-
-          # Save main branch build
-          mkdir -p pr-dist
-          mv dist/* pr-dist/ || true
-
-          # Return to PR branch
-          git checkout $CURRENT_BRANCH || git checkout ${{ github.head_ref }} || git checkout ${{ github.ref }}
-
-          # Ensure dist directory exists
-          mkdir -p dist
-
-          # Copy main branch build
-          cp -r pr-dist/* dist/ || true
-
-          # Don't fail if any of the copy commands failed
-          ls -la dist
-          exit 0
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
+      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      # Add comment only on PR
-      - name: Comment on PR with staging link
-        if: github.event_name == 'pull_request'
-        uses: mshick/add-pr-comment@v2
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          message: |
-            🚀 Staging deployment is ready!
-            Visit PR preview: https://trainings.mashlom.me/pr/${{ github.event.number }}/#/er
-            Visit main branch: https://trainings.mashlom.me/#/er
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./combined-dist
+          force_orphan: true
