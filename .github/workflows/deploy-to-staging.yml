@@ -51,8 +51,8 @@ jobs:
           # Store current branch name
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-          # First build PR branch
-          npm run build
+          # First build PR branch with correct base path
+          VITE_BASE_PATH=/pr/${{ github.event.number }}/ npm run build
           mkdir -p tmp-pr-dist
           mv dist/* tmp-pr-dist/ || true
 
@@ -60,9 +60,9 @@ jobs:
           git fetch origin main:main
           git checkout main
 
-          # Build main branch
+          # Build main branch with root base path
           npm ci
-          npm run build
+          VITE_BASE_PATH=/ npm run build
 
           # Prepare final dist structure
           mkdir -p dist/pr/${{ github.event.number }}
