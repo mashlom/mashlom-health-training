@@ -122,7 +122,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     window.addEventListener('dataSourceChanged', handleDataSourceChange);
-    console.log('window- ariel');
+  
     return () => {
       window.removeEventListener('dataSourceChanged', handleDataSourceChange);
     };

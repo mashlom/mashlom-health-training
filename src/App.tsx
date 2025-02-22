@@ -12,7 +12,6 @@ import ScorePage from "./pages/ScorePage";
 import "./commoncss/global.css";
 
 const App: React.FC = () => {
-  console.log('App rendered- ARIEL');
   return (
     <TopicsProvider>
     <HashRouter>
