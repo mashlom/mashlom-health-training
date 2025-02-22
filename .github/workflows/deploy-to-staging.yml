@@ -1,65 +1,103 @@
-name: Build Environments
+name: Deploy to GitHub Pages
 
 on:
+  # Trigger on PRs to main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+  # Trigger on pushes to main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
 
 jobs:
-  build-environments:
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout PR branch
-        uses: actions/checkout@v3
-        with:
-          path: pr-branch
-          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Checkout main branch
-        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          path: main-branch
-          ref: main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
-          cache-dependency-path: |
-            pr-branch/package-lock.json
-            main-branch/package-lock.json
 
-      # Build main branch
-      - name: Install dependencies (main)
-        working-directory: main-branch
+      - name: Install dependencies
         run: npm ci
 
+      # Build PR preview (this will be handled in the combined build step)
+      - name: Build PR preview
+        if: github.event_name == 'pull_request'
+        env:
+          VITE_BASE_PATH: /pr/${{ github.event.number }}/
+        run: echo "PR build will be handled in combined build step"
+
+      # Build main branch if it's a push to main
       - name: Build main
-        working-directory: main-branch
+        if: github.event_name == 'push'
         run: npm run build
 
-      # Build PR branch
-      - name: Install dependencies (PR)
-        working-directory: pr-branch
-        run: npm ci
-
-      - name: Build PR
-        working-directory: pr-branch
-        run: npm run build
-
-      # Organize dist folders
-      - name: Organize distributions
+      # If this is a PR, fetch and build main branch as well
+      - name: Fetch and build main branch
+        if: github.event_name == 'pull_request'
         run: |
-          mkdir -p combined-dist
-          cp -r main-branch/dist/* combined-dist/
-          mkdir -p combined-dist/staging
-          cp -r pr-branch/dist/* combined-dist/staging/
+          # Store current branch name
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-      # Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+          # First build PR branch
+          npm run build
+          mkdir -p tmp-pr-dist
+          mv dist/* tmp-pr-dist/ || true
+
+          # Fetch and checkout main
+          git fetch origin main:main
+          git checkout main
+
+          # Build main branch
+          npm ci
+          npm run build
+
+          # Prepare final dist structure
+          mkdir -p dist/pr/${{ github.event.number }}
+
+          # Move main build to root of dist
+          mv dist/* dist/ || true
+
+          # Move PR build to its specific directory
+          mv tmp-pr-dist/* dist/pr/${{ github.event.number }}/ || true
+
+          # Print directory structure for debugging
+          echo "Final dist directory structure:"
+          ls -R dist/
+
+          # Don't fail if any of the copy commands failed
+          exit 0
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./combined-dist
-          force_orphan: true
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      # Add comment only on PR
+      - name: Comment on PR with staging link
+        if: github.event_name == 'pull_request'
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            🚀 Staging deployment is ready!
+            Visit PR preview: https://trainings.mashlom.me/pr/${{ github.event.number }}/#/er
+            Visit main branch: https://trainings.mashlom.me/#/er
