@@ -53,7 +53,7 @@ jobs:
           PR_COMMIT=$(git rev-parse HEAD)
 
           # First build PR branch with staging environment
-          VITE_BASE_PATH=/staging/${{ github.event.number }}/ \
+          VITE_BASE_PATH=/staging/ \
           VITE_APP_ENV=staging \
           VITE_PR_NUMBER=${{ github.event.number }} \
           VITE_COMMIT_SHA=$PR_COMMIT \
@@ -74,13 +74,13 @@ jobs:
           npm run build
 
           # Prepare final dist structure
-          mkdir -p dist/staging/${{ github.event.number }}
+          mkdir -p dist/staging
 
           # Move main build to root of dist
           mv dist/* dist/ || true
 
-          # Move PR build to its specific directory
-          mv tmp-pr-dist/* dist/staging/${{ github.event.number }}/ || true
+          # Move PR build to staging directory
+          mv tmp-pr-dist/* dist/staging/ || true
 
           # Print directory structure for debugging
           echo "Final dist directory structure:"
@@ -108,5 +108,6 @@ jobs:
         with:
           message: |
             🚀 Staging deployment is ready!
-            Visit Staging preview: https://trainings.mashlom.me/staging/${{ github.event.number }}/#/er
+            Visit Staging: https://trainings.mashlom.me/staging/#/er
+            (PR #${{ github.event.number }})
             Visit main branch: https://trainings.mashlom.me/#/er
