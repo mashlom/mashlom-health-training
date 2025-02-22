@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getConfig } from '../config/env';
-import quizData from "../data/quizData.json";
+import { getApiBaseUrl, getCurrentDataSource } from '../config/env';
+import quizData from '../data/quizData.json';
 
 interface Question {
   question: string;
@@ -22,64 +22,59 @@ interface TopicsContextType {
   error: string | null;
 }
 
-// Create a type for the data source
-type DataSource = 'json' | 'mongodb';
-
-// Initialize data source state
-let currentDataSource: DataSource = 'json';
-
-// Add window methods for controlling data source
-declare global {
-  interface Window {
-    toggleDataSource: (useMongoDB: boolean) => void;
-    getCurrentDataSource: () => DataSource;
-  }
-}
-
-// Implement the window methods
-window.toggleDataSource = (useMongoDB: boolean) => {
-  currentDataSource = useMongoDB ? 'mongodb' : 'json';
-  console.log(`Switched to ${currentDataSource} data source`);
-  // Trigger a re-render by dispatching a custom event
-  window.dispatchEvent(new CustomEvent('dataSourceChanged'));
-};
-
-window.getCurrentDataSource = () => {
-  return currentDataSource;
-};
-
 const TopicsContext = createContext<TopicsContextType | undefined>(undefined);
 
-export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [topics, setTopics] = useState<QuizTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const config = getConfig();
+
+  // Use environment variables directly from Vite
+  const API_BASE_URL = getApiBaseUrl();
+
+  // Log build information
+  useEffect(() => {
+    console.log('Build Info:', {
+      environment: import.meta.env.VITE_APP_ENV,
+      prNumber: import.meta.env.VITE_PR_NUMBER,
+      commitSha: import.meta.env.VITE_COMMIT_SHA,
+      baseUrl: API_BASE_URL,
+    });
+  }, [API_BASE_URL]);
 
   // Function to fetch data from MongoDB
   const fetchFromMongoDB = async () => {
     try {
-      const baseUrl = config.REACT_APP_API_BASE_URL;
-      const response = await fetch(`${baseUrl}/api/trainings/training-topic/test1`);
-      
+      const response = await fetch(
+        `${API_BASE_URL}/api/trainings/training-topic/test1`
+      );
+
       if (!response.ok) {
         throw new Error('Failed to fetch topics from MongoDB');
       }
-      
+
       const rawData = await response.json();
       // Ensure the data matches our QuizTopic interface
-      const formattedData: QuizTopic[] = Array.isArray(rawData) ? rawData.map(item => ({
-        id: String(item.id),
-        title: String(item.title),
-        chapter: Number(item.chapter),
-        questions: Array.isArray(item.questions) ? item.questions.map(q => ({
-          question: String(q.question),
-          answers: Array.isArray(q.answers) ? q.answers.map(String) : [],
-          correct: Number(q.correct),
-          explanation: String(q.explanation)
-        })) : []
-      })) : [];
-      
+      const formattedData: QuizTopic[] = Array.isArray(rawData)
+        ? rawData.map((item) => ({
+            id: String(item.id),
+            title: String(item.title),
+            chapter: Number(item.chapter),
+            questions: Array.isArray(item.questions)
+              ? item.questions.map((q) => ({
+                  question: String(q.question),
+                  answers: Array.isArray(q.answers)
+                    ? q.answers.map(String)
+                    : [],
+                  correct: Number(q.correct),
+                  explanation: String(q.explanation),
+                }))
+              : [],
+          }))
+        : [];
+
       setTopics(formattedData);
       setError(null);
     } catch (err) {
@@ -91,8 +86,11 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Function to load data from JSON
   const loadFromJSON = () => {
     try {
-      // Handle the JSON structure which has a top-level "quizTopics" key
-      if (!quizData || !quizData.quizTopics || !Array.isArray(quizData.quizTopics)) {
+      if (
+        !quizData ||
+        !quizData.quizTopics ||
+        !Array.isArray(quizData.quizTopics)
+      ) {
         throw new Error('JSON data is not in the expected format');
       }
       setTopics(quizData.quizTopics);
@@ -107,7 +105,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Function to load data based on current source
   const loadData = async () => {
     setLoading(true);
-    if (currentDataSource === 'mongodb') {
+    if (getCurrentDataSource() === 'mongodb') {
       await fetchFromMongoDB();
     } else {
       loadFromJSON();
@@ -124,11 +122,11 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     window.addEventListener('dataSourceChanged', handleDataSourceChange);
-
+  
     return () => {
       window.removeEventListener('dataSourceChanged', handleDataSourceChange);
     };
-  }, [config.REACT_APP_API_BASE_URL]);
+  }, []);
 
   return (
     <TopicsContext.Provider value={{ topics, loading, error }}>
@@ -153,17 +151,15 @@ export const useTopics = (topicId?: string) => {
         (acc, topic) => [...acc, ...topic.questions],
         []
       );
-      return [...allQuestions]
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 10);
+      return [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
     }
 
-    const topic = topics.find(t => t.id === topicId);
+    const topic = topics.find((t) => t.id === topicId);
     return topic?.questions || [];
   }, [topics, topicId, loading]);
 
-  const sortedTopics = React.useMemo(() => 
-    [...topics].sort((a, b) => a.chapter - b.chapter),
+  const sortedTopics = React.useMemo(
+    () => [...topics].sort((a, b) => a.chapter - b.chapter),
     [topics]
   );
 
@@ -171,6 +167,6 @@ export const useTopics = (topicId?: string) => {
     topics: sortedTopics,
     currentTopicQuestions,
     loading,
-    error
+    error,
   };
 };

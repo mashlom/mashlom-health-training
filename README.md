@@ -1,22 +1,40 @@
-while on the questions page you can do these commands:
+# Mashlom Health Training
 
-// To switch to MongoDB
-window.toggleDataSource(true)
+Emergency Medicine Exam Preparation Questionnaire
 
-// To switch to JSON
-window.toggleDataSource(false)
+## Development Environment
 
-// To check current data source
-window.getCurrentDataSource()
+### Data Source Toggle
 
-everywhere you can change where the api eill go to using this commands:
+The application supports two data sources: JSON and MongoDB. You can toggle between them using either:
 
-// View current environment
-window.getEnv()
+1. Chrome Extension (recommended):
 
-// Switch environments
-window.setEnv('staging')
-window.setEnv('development')
+   - Located in the `chrome-ext` directory
+   - Install by going to `chrome://extensions/`, enabling "Developer mode", and clicking "Load unpacked"
+   - Click the extension icon to toggle between JSON and MongoDB data sources
 
-// List all available environments
-window.listEnvs()
+2. Browser Console:
+   ```javascript
+   window.toggleDataSource(true); // Switch to MongoDB
+   window.toggleDataSource(false); // Switch to JSON
+   window.getCurrentDataSource(); // Check current data source
+   ```
+
+## Deployment
+
+The application uses GitHub Pages with two environments:
+
+### Production
+
+- Deploys automatically when changes merge to main branch
+- URL: https://trainings.mashlom.me/
+
+### Staging
+
+- Deploys automatically on PR commits
+- URL: https://trainings.mashlom.me/staging/
+- Check the browser console to see:
+  - Current PR number
+  - Commit hash
+  - Environment details
