@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiBaseUrl, getCurrentDataSource } from '../config/env';
 import quizData from '../data/quizData.json';
 
 interface Question {
@@ -21,31 +22,6 @@ interface TopicsContextType {
   error: string | null;
 }
 
-// Create a type for the data source
-type DataSource = 'json' | 'mongodb';
-
-// Initialize data source state
-let currentDataSource: DataSource = 'json';
-
-// Add window methods for controlling data source
-declare global {
-  interface Window {
-    toggleDataSource: (useMongoDB: boolean) => void;
-    getCurrentDataSource: () => DataSource;
-  }
-}
-
-// Implement the window methods
-window.toggleDataSource = (useMongoDB: boolean) => {
-  currentDataSource = useMongoDB ? 'mongodb' : 'json';
-  console.log(`Switched to ${currentDataSource} data source`);
-  window.dispatchEvent(new CustomEvent('dataSourceChanged'));
-};
-
-window.getCurrentDataSource = () => {
-  return currentDataSource;
-};
-
 const TopicsContext = createContext<TopicsContextType | undefined>(undefined);
 
 export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -56,10 +32,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
   const [error, setError] = useState<string | null>(null);
 
   // Use environment variables directly from Vite
-  const API_BASE_URL =
-    import.meta.env.VITE_APP_ENV === 'staging'
-      ? 'https://mashlom-stg-api-gyefcpeqa3cnejfx.westus-01.azurewebsites.net'
-      : 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net';
+  const API_BASE_URL = getApiBaseUrl();
 
   // Log build information
   useEffect(() => {
@@ -132,7 +105,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
   // Function to load data based on current source
   const loadData = async () => {
     setLoading(true);
-    if (currentDataSource === 'mongodb') {
+    if (getCurrentDataSource() === 'mongodb') {
       await fetchFromMongoDB();
     } else {
       loadFromJSON();
@@ -149,7 +122,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     window.addEventListener('dataSourceChanged', handleDataSourceChange);
-
+    console.log('window- ariel');
     return () => {
       window.removeEventListener('dataSourceChanged', handleDataSourceChange);
     };
