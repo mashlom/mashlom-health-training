@@ -50,28 +50,37 @@ jobs:
         run: |
           # Store current branch name
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PR_COMMIT=$(git rev-parse HEAD)
 
-          # First build PR branch with correct base path
-          VITE_BASE_PATH=/pr/${{ github.event.number }}/ npm run build
+          # First build PR branch with staging environment
+          VITE_BASE_PATH=/staging/${{ github.event.number }}/ \
+          VITE_APP_ENV=staging \
+          VITE_PR_NUMBER=${{ github.event.number }} \
+          VITE_COMMIT_SHA=$PR_COMMIT \
+          npm run build
           mkdir -p tmp-pr-dist
           mv dist/* tmp-pr-dist/ || true
 
           # Fetch and checkout main
           git fetch origin main:main
           git checkout main
+          MAIN_COMMIT=$(git rev-parse HEAD)
 
-          # Build main branch with root base path
+          # Build main branch with production environment
           npm ci
-          VITE_BASE_PATH=/ npm run build
+          VITE_BASE_PATH=/ \
+          VITE_APP_ENV=production \
+          VITE_COMMIT_SHA=$MAIN_COMMIT \
+          npm run build
 
           # Prepare final dist structure
-          mkdir -p dist/pr/${{ github.event.number }}
+          mkdir -p dist/staging/${{ github.event.number }}
 
           # Move main build to root of dist
           mv dist/* dist/ || true
 
           # Move PR build to its specific directory
-          mv tmp-pr-dist/* dist/pr/${{ github.event.number }}/ || true
+          mv tmp-pr-dist/* dist/staging/${{ github.event.number }}/ || true
 
           # Print directory structure for debugging
           echo "Final dist directory structure:"
@@ -99,5 +108,5 @@ jobs:
         with:
           message: |
             🚀 Staging deployment is ready!
-            Visit PR preview: https://trainings.mashlom.me/pr/${{ github.event.number }}/#/er
+            Visit Staging preview: https://trainings.mashlom.me/staging/${{ github.event.number }}/#/er
             Visit main branch: https://trainings.mashlom.me/#/er
