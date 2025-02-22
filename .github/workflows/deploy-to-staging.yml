@@ -76,6 +76,7 @@ jobs:
           cp -r pr-dist/* dist/ || true
 
           # Don't fail if any of the copy commands failed
+          ls -la dist
           exit 0
 
       - name: Configure GitHub Pages
