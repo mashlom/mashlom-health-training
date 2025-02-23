@@ -82,6 +82,12 @@ jobs:
           # Move PR build to staging directory
           mv tmp-pr-dist/* dist/staging/ || true
 
+          # Ensure public assets are in both locations
+          if [ -f "public/tab_icon.png" ]; then
+            cp public/tab_icon.png dist/
+            cp public/tab_icon.png dist/staging/
+          fi
+
           # Print directory structure for debugging
           echo "Final dist directory structure:"
           ls -R dist/
