@@ -11,11 +11,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {
-          // Ensure tab_icon.png always goes to assets directory
-          return 'assets/[name][extname]';
+          // Keep favicon at root level
+          if (assetInfo.name === 'tab_icon.png') {
+            return '[name][extname]';
+          }
+          return 'assets/[name]-[hash][extname]';
         }
       }
     }
   },
-  publicDir: 'public',
 });

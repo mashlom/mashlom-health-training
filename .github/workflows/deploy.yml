@@ -30,69 +30,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Build main branch if it's a push to main
-      - name: Build main
-        if: github.event_name == 'push'
-        run: |
-          # Verify favicon location
-          if [ ! -f "public/assets/tab_icon.png" ]; then
-            echo "Error: favicon not found in public/assets directory"
-            exit 1
-          fi
-          npm run build
-
-          # Verify favicon in build output
-          if [ ! -f "dist/assets/tab_icon.png" ]; then
-            echo "Error: favicon not found in build output"
-            exit 1
-          fi
-
-      # If this is a PR, build both branches
-      - name: Fetch and build main branch
+      # Build PR preview
+      - name: Build PR preview
         if: github.event_name == 'pull_request'
         run: |
-          # Store current branch name
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          PR_COMMIT=$(git rev-parse HEAD)
-
-          # First build PR branch with staging environment
-          VITE_BASE_PATH=/staging/ \
-          VITE_APP_ENV=staging \
-          VITE_PR_NUMBER=${{ github.event.number }} \
-          VITE_COMMIT_SHA=$PR_COMMIT \
-          npm run build
+          # First build PR branch
+          VITE_BASE_PATH=/staging/ npm run build
           mkdir -p tmp-pr-dist
-          mv dist/* tmp-pr-dist/ || true
+          mv dist/* tmp-pr-dist/
 
-          # Fetch and checkout main
+          # Copy favicon explicitly
+          cp public/tab_icon.png tmp-pr-dist/
+
+          # Fetch and build main
           git fetch origin main:main
           git checkout main
-          MAIN_COMMIT=$(git rev-parse HEAD)
-
-          # Build main branch with production environment
           npm ci
-          VITE_BASE_PATH=/ \
-          VITE_APP_ENV=production \
-          VITE_COMMIT_SHA=$MAIN_COMMIT \
-          npm run build
+          VITE_BASE_PATH=/ npm run build
 
-          # Prepare final dist structure
+          # Copy favicon explicitly
+          cp public/tab_icon.png dist/
+
+          # Setup final structure
           mkdir -p dist/staging
+          mv tmp-pr-dist/* dist/staging/
 
-          # Move main build to root of dist
-          mv dist/* dist/ || true
-
-          # Move PR build to staging directory
-          mv tmp-pr-dist/* dist/staging/ || true
-
-          # Ensure assets directories exist
-          mkdir -p dist/assets
-          mkdir -p dist/staging/assets
-
-          # Debug: Print directory structure
-          echo "Final dist directory structure:"
-          ls -la dist/assets/
-          ls -la dist/staging/assets/
+      # Build production
+      - name: Build production
+        if: github.event_name == 'push'
+        run: |
+          npm run build
+          # Copy favicon explicitly
+          cp public/tab_icon.png dist/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
