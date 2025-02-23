@@ -11,11 +11,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {
-          // Keep the original name for favicon and other root assets
-          if (assetInfo.name === 'tab_icon.png') {
-            return '[name][extname]';
-          }
-          return 'assets/[name]-[hash][extname]';
+          // Ensure tab_icon.png always goes to assets directory
+          return 'assets/[name][extname]';
         }
       }
     }

@@ -34,15 +34,15 @@ jobs:
       - name: Build main
         if: github.event_name == 'push'
         run: |
-          # Ensure favicon exists in public directory
-          if [ ! -f "public/tab_icon.png" ]; then
-            echo "Error: favicon not found in public directory"
+          # Verify favicon location
+          if [ ! -f "public/assets/tab_icon.png" ]; then
+            echo "Error: favicon not found in public/assets directory"
             exit 1
           fi
           npm run build
-          
+
           # Verify favicon in build output
-          if [ ! -f "dist/tab_icon.png" ]; then
+          if [ ! -f "dist/assets/tab_icon.png" ]; then
             echo "Error: favicon not found in build output"
             exit 1
           fi
@@ -85,10 +85,14 @@ jobs:
           # Move PR build to staging directory
           mv tmp-pr-dist/* dist/staging/ || true
 
+          # Ensure assets directories exist
+          mkdir -p dist/assets
+          mkdir -p dist/staging/assets
+
           # Debug: Print directory structure
           echo "Final dist directory structure:"
-          ls -la dist/
-          ls -la dist/staging/
+          ls -la dist/assets/
+          ls -la dist/staging/assets/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
