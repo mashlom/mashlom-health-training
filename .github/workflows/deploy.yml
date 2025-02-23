@@ -1,9 +1,11 @@
 name: Deploy to GitHub Pages
 
 on:
+  # Trigger on PRs to main
   pull_request:
     branches:
       - main
+  # Trigger on pushes to main
   push:
     branches:
       - main
@@ -30,38 +32,62 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Build PR preview
+      # Build PR preview (this will be handled in the combined build step)
       - name: Build PR preview
         if: github.event_name == 'pull_request'
+        env:
+          VITE_BASE_PATH: /pr/${{ github.event.number }}/
+        run: echo "PR build will be handled in combined build step"
+
+      # Build main branch if it's a push to main
+      - name: Build main
+        if: github.event_name == 'push'
+        run: npm run build
+
+      # If this is a PR, fetch and build main branch as well
+      - name: Fetch and build main branch
+        if: github.event_name == 'pull_request'
         run: |
-          # First build PR branch
-          VITE_BASE_PATH=/staging/ npm run build
+          # Store current branch name
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          PR_COMMIT=$(git rev-parse HEAD)
+
+          # First build PR branch with staging environment
+          VITE_BASE_PATH=/staging/ \
+          VITE_APP_ENV=staging \
+          VITE_PR_NUMBER=${{ github.event.number }} \
+          VITE_COMMIT_SHA=$PR_COMMIT \
+          npm run build
           mkdir -p tmp-pr-dist
-          mv dist/* tmp-pr-dist/
+          mv dist/* tmp-pr-dist/ || true
 
-          # Copy favicon explicitly
-          cp public/tab_icon.png tmp-pr-dist/
-
-          # Fetch and build main
+          # Fetch and checkout main
           git fetch origin main:main
           git checkout main
+          MAIN_COMMIT=$(git rev-parse HEAD)
+
+          # Build main branch with production environment
           npm ci
-          VITE_BASE_PATH=/ npm run build
-
-          # Copy favicon explicitly
-          cp public/tab_icon.png dist/
-
-          # Setup final structure
-          mkdir -p dist/staging
-          mv tmp-pr-dist/* dist/staging/
-
-      # Build production
-      - name: Build production
-        if: github.event_name == 'push'
-        run: |
+          VITE_BASE_PATH=/ \
+          VITE_APP_ENV=production \
+          VITE_COMMIT_SHA=$MAIN_COMMIT \
           npm run build
-          # Copy favicon explicitly
-          cp public/tab_icon.png dist/
+
+          # Prepare final dist structure
+          mkdir -p dist/staging
+
+          # Move main build to root of dist
+          mv dist/* dist/ || true
+
+          # Move PR build to staging directory
+          mv tmp-pr-dist/* dist/staging/ || true
+
+          # Print directory structure for debugging
+          echo "Final dist directory structure:"
+          ls -R dist/
+
+          # Don't fail if any of the copy commands failed
+          exit 0
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4

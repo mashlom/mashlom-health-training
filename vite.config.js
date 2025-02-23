@@ -7,17 +7,5 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    copyPublicDir: true,
-    rollupOptions: {
-      output: {
-        assetFileNames: (assetInfo) => {
-          // Keep favicon at root level
-          if (assetInfo.name === 'tab_icon.png') {
-            return '[name][extname]';
-          }
-          return 'assets/[name]-[hash][extname]';
-        }
-      }
-    }
   },
 });
