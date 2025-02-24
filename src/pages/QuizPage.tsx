@@ -11,7 +11,7 @@ interface Question {
   correct: number;
   explanation: string;
 }
-
+console.log("Hello World");
 const QuizPage: React.FC = () => {
   const { department, topicId } = useParams<{
     department: string;
