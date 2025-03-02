@@ -27,7 +27,7 @@ export const getApiBaseUrl = () => {
 
 // Data source management
 let currentDataSource: DataSource =
-  (localStorage.getItem('currentDataSource') as DataSource) || 'json';
+  (localStorage.getItem('currentDataSource') as DataSource) || 'mongodb';
 
 // Window method declarations for TypeScript
 declare global {
