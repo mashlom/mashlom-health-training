@@ -10,6 +10,14 @@ interface Question {
   answers: string[];
   correct: number;
   explanation: string;
+  id?: string;
+  _id?: string;
+}
+
+interface AnswerWithIndex {
+  text: string;
+  isCorrect: boolean;
+  originalIndex: number;
 }
 
 const QuizPage: React.FC = () => {
@@ -25,35 +33,57 @@ const QuizPage: React.FC = () => {
   const [score, setScore] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
-  const [shuffledAnswers, setShuffledAnswers] = useState<string[]>([]);
-  const [correctAnswerIndex, setCorrectAnswerIndex] = useState<number | null>(null);
+  const [shuffledAnswers, setShuffledAnswers] = useState<AnswerWithIndex[]>([]);
 
   // Set up shuffled questions when topic questions are loaded
   useEffect(() => {
-    if (currentTopicQuestions.length > 0) {
-      setShuffledQuestions([...currentTopicQuestions].sort(() => 0.5 - Math.random()));
+    if (currentTopicQuestions && currentTopicQuestions.length > 0) {
+      // Process questions to ensure they have all required properties
+      const processedQuestions = currentTopicQuestions.map(q => ({
+        ...q,
+        question: q.question || "No question text",
+        answers: Array.isArray(q.answers) ? q.answers : [],
+        correct: typeof q.correct === 'number' ? q.correct : 0,
+        explanation: q.explanation || "No explanation provided"
+      }));
+      
+      // Filter out any questions without answers
+      const validQuestions = processedQuestions.filter(q => q.answers && q.answers.length > 0);
+      
+      // Shuffle the valid questions
+      const shuffled = [...validQuestions].sort(() => 0.5 - Math.random());
+      setShuffledQuestions(shuffled);
     }
   }, [currentTopicQuestions]);
 
   // Set up shuffled answers for current question
   useEffect(() => {
-    if (shuffledQuestions.length > 0) {
+    if (shuffledQuestions.length > 0 && currentQuestion < shuffledQuestions.length) {
       const currentQ = shuffledQuestions[currentQuestion];
+      
+      // Ensure correct index is valid
+      const correctIndex = typeof currentQ.correct === 'number' && 
+                           currentQ.correct >= 0 && 
+                           currentQ.correct < currentQ.answers.length
+                           ? currentQ.correct
+                           : 0;
+      
       const answersWithIndices = currentQ.answers.map((answer, index) => ({
-        text: answer,
-        isCorrect: index === currentQ.correct,
+        text: answer || "No answer text",
+        isCorrect: index === correctIndex,
+        originalIndex: index // Keep track of original index
       }));
 
+      // Shuffle the answers
       const shuffled = [...answersWithIndices].sort(() => Math.random() - 0.5);
-      setCorrectAnswerIndex(shuffled.findIndex((answer) => answer.isCorrect));
-      setShuffledAnswers(shuffled.map((answer) => answer.text));
+      setShuffledAnswers(shuffled);
     }
   }, [currentQuestion, shuffledQuestions]);
 
   const handleAnswer = (index: number) => {
     setSelectedAnswer(index);
     setShowAnswer(true);
-    if (index === correctAnswerIndex) {
+    if (shuffledAnswers[index] && shuffledAnswers[index].isCorrect) {
       setScore(score + 1);
     }
   };
@@ -65,7 +95,11 @@ const QuizPage: React.FC = () => {
       setShowAnswer(false);
     } else {
       navigate(`/${department}/quiz/${topicId}/finish`, {
-        state: { score: Math.round((score / shuffledQuestions.length) * 100) },
+        state: { 
+          score: shuffledQuestions.length > 0 
+            ? Math.round((score / shuffledQuestions.length) * 100) 
+            : 0 
+        },
       });
     }
   };
@@ -78,7 +112,32 @@ const QuizPage: React.FC = () => {
     return <div className="text-center p-4">Loading...</div>;
   }
 
-  if (shuffledQuestions.length === 0 || !shuffledAnswers.length) return null;
+  if (shuffledQuestions.length === 0) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <Card className="overflow-hidden">
+          <div id="question-header" className="bg-[var(--page-font-color)] p-1">
+            <div className="flex justify-center items-center flex-row px-5">
+              <HomeButton
+                onClick={handleHome}
+                className="flex items-center justify-center gap-2 p-2 text-white hover:text-gray-200 transition-colors duration-200"
+                text="חזרה לעמוד השאלות"
+              />
+            </div>
+          </div>
+          <CardContent className="p-6 text-center">
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-[var(--page-font-color)] leading-relaxed">
+                לא נמצאו שאלות עבור נושא זה
+              </h2>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!shuffledAnswers || shuffledAnswers.length === 0) return null;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -99,7 +158,7 @@ const QuizPage: React.FC = () => {
         <CardContent className="p-6">
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-[var(--page-font-color)] leading-relaxed">
-              {shuffledQuestions[currentQuestion].question}
+              {shuffledQuestions[currentQuestion]?.question || "No question text"}
             </h2>
           </div>
 
@@ -111,7 +170,7 @@ const QuizPage: React.FC = () => {
                 disabled={showAnswer}
                 className={`w-full min-h-[3.5rem] px-4 py-3 text-right rounded-lg border ${
                   showAnswer
-                    ? index === correctAnswerIndex
+                    ? answer.isCorrect
                       ? "bg-green-100 border-green-300 text-[var(--page-font-color)]"
                       : selectedAnswer === index
                       ? "bg-[#fff0f0] border-[#ff9999] text-[var(--page-font-color)]"
@@ -120,9 +179,9 @@ const QuizPage: React.FC = () => {
                 } transition-colors duration-200 focus:outline-none`}
               >
                 <div className="flex justify-between items-center">
-                  <span className="flex-1">{answer}</span>
+                  <span className="flex-1">{answer.text}</span>
                   {showAnswer &&
-                    (index === correctAnswerIndex ? (
+                    (answer.isCorrect ? (
                       <Check className="w-5 h-5 text-green-600 ml-2 shrink-0" />
                     ) : selectedAnswer === index ? (
                       <X className="w-5 h-5 text-[#ff9999] ml-2 shrink-0" />
@@ -139,7 +198,7 @@ const QuizPage: React.FC = () => {
                   הסבר:
                 </h3>
                 <p className="text-[var(--header-text-color)]">
-                  {shuffledQuestions[currentQuestion].explanation}
+                  {shuffledQuestions[currentQuestion]?.explanation || "No explanation provided"}
                 </p>
               </div>
 

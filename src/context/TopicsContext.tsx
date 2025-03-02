@@ -1,33 +1,28 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getConfig } from '../config/env';
 import quizData from "../data/quizData.json";
-
 interface Question {
   question: string;
   answers: string[];
   correct: number;
   explanation: string;
 }
-
 interface QuizTopic {
   id: string;
+  _id?: string; // Added _id field for MongoDB ObjectId support
   title: string;
   chapter: number;
   questions: Question[];
 }
-
 interface TopicsContextType {
   topics: QuizTopic[];
   loading: boolean;
   error: string | null;
 }
-
 // Create a type for the data source
 type DataSource = 'json' | 'mongodb';
-
 // Initialize data source state
 let currentDataSource: DataSource = 'json';
-
 // Add window methods for controlling data source
 declare global {
   interface Window {
@@ -35,7 +30,6 @@ declare global {
     getCurrentDataSource: () => DataSource;
   }
 }
-
 // Implement the window methods
 window.toggleDataSource = (useMongoDB: boolean) => {
   currentDataSource = useMongoDB ? 'mongodb' : 'json';
@@ -43,24 +37,20 @@ window.toggleDataSource = (useMongoDB: boolean) => {
   // Trigger a re-render by dispatching a custom event
   window.dispatchEvent(new CustomEvent('dataSourceChanged'));
 };
-
 window.getCurrentDataSource = () => {
   return currentDataSource;
 };
-
 const TopicsContext = createContext<TopicsContextType | undefined>(undefined);
-
 export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [topics, setTopics] = useState<QuizTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const config = getConfig();
-
   // Function to fetch data from MongoDB
   const fetchFromMongoDB = async () => {
     try {
       const baseUrl = config.REACT_APP_API_BASE_URL;
-      const response = await fetch(`${baseUrl}/api/trainings/training-topic/test1`);
+      const response = await fetch(`${baseUrl}/api/trainingsAnonymous/training-topic/topic1`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch topics from MongoDB');
@@ -69,7 +59,8 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const rawData = await response.json();
       // Ensure the data matches our QuizTopic interface
       const formattedData: QuizTopic[] = Array.isArray(rawData) ? rawData.map(item => ({
-        id: String(item.id),
+        id: String(item.id || item._id), // Use _id as fallback for id
+        _id: String(item._id || item.id), // Store _id explicitly
         title: String(item.title),
         chapter: Number(item.chapter),
         questions: Array.isArray(item.questions) ? item.questions.map(q => ({
@@ -87,7 +78,6 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setTopics([]);
     }
   };
-
   // Function to load data from JSON
   const loadFromJSON = () => {
     try {
@@ -103,7 +93,6 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setTopics([]);
     }
   };
-
   // Function to load data based on current source
   const loadData = async () => {
     setLoading(true);
@@ -114,40 +103,31 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
     setLoading(false);
   };
-
   useEffect(() => {
     loadData();
-
     // Listen for data source changes
     const handleDataSourceChange = () => {
       loadData();
     };
-
     window.addEventListener('dataSourceChanged', handleDataSourceChange);
-
     return () => {
       window.removeEventListener('dataSourceChanged', handleDataSourceChange);
     };
   }, [config.REACT_APP_API_BASE_URL]);
-
   return (
     <TopicsContext.Provider value={{ topics, loading, error }}>
       {children}
     </TopicsContext.Provider>
   );
 };
-
 export const useTopics = (topicId?: string) => {
   const context = useContext(TopicsContext);
   if (context === undefined) {
     throw new Error('useTopics must be used within a TopicsProvider');
   }
-
   const { topics, loading, error } = context;
-
   const currentTopicQuestions = React.useMemo(() => {
     if (!topicId || loading) return [];
-
     if (topicId === 'random') {
       const allQuestions = topics.reduce<Question[]>(
         (acc, topic) => [...acc, ...topic.questions],
@@ -157,16 +137,14 @@ export const useTopics = (topicId?: string) => {
         .sort(() => 0.5 - Math.random())
         .slice(0, 10);
     }
-
-    const topic = topics.find(t => t.id === topicId);
+    // Look for the topic by either id or _id
+    const topic = topics.find(t => t.id === topicId || t._id === topicId);
     return topic?.questions || [];
   }, [topics, topicId, loading]);
-
   const sortedTopics = React.useMemo(() => 
     [...topics].sort((a, b) => a.chapter - b.chapter),
     [topics]
   );
-
   return {
     topics: sortedTopics,
     currentTopicQuestions,

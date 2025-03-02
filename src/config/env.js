@@ -2,7 +2,7 @@
 const environments = {
   development: {
     REACT_APP_ENV: 'development',
-    REACT_APP_API_BASE_URL: 'http://localhost:5000'
+    REACT_APP_API_BASE_URL: 'http://localhost:5001'
   },
   staging: {
     REACT_APP_ENV: 'staging',
