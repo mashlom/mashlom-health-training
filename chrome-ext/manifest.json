@@ -1,0 +1,53 @@
+{
+    "manifest_version": 3,
+    "name": "Mashlom Dev Tools",
+    "version": "1.0",
+    "description": "Development tools for Mashlom application",
+    "permissions": [
+        "activeTab",
+        "storage"
+    ],
+    "host_permissions": [
+        "*://localhost:*/*",
+        "*://trainings.mashlom.me/*",
+        "*://my.mashlom.me/*",
+        "*://my-stg.mashlom.me/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://localhost:*/*",
+                "*://trainings.mashlom.me/*",
+                "*://my.mashlom.me/*",
+                "*://my-stg.mashlom.me/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "pageScript.js"
+            ],
+            "matches": [
+                "*://localhost:*/*",
+                "*://trainings.mashlom.me/*",
+                "*://my.mashlom.me/*",
+                "*://my-stg.mashlom.me/*"
+            ]
+        }
+    ],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    }
+}
