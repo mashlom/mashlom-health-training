@@ -35,7 +35,7 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const fetchFromMongoDB = async () => {
     try {
       const baseUrl = getApiBaseUrl();
-      const response = await fetch(`${baseUrl}/api/trainingsAnonymous/training-topic/topic1`);
+      const response = await fetch(`${baseUrl}/api/trainingsAnonymous/training-topic/th10%20edition%20edition%20Medicine%20Emergency%20s'Rosen`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch topics from MongoDB');
