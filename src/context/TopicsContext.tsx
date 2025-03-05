@@ -13,7 +13,7 @@ interface TestTopic {
   id: string;
   _id?: string; // Added _id field for MongoDB ObjectId support
   title: string;
-  // Removed chapter field
+  order?: number; // Add order field
   questions: Question[];
 }
 
@@ -59,18 +59,35 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       const rawData = await response.json();
-      // Ensure the data matches our TestTopic interface - removed chapter field
-      const formattedData: TestTopic[] = Array.isArray(rawData) ? rawData.map(item => ({
-        id: String(item.id || item._id), // Use _id as fallback for id
-        _id: String(item._id || item.id), // Store _id explicitly
-        title: String(item.title),
-        questions: Array.isArray(item.questions) ? item.questions.map(q => ({
-          question: String(q.question),
-          answers: Array.isArray(q.answers) ? q.answers.map(String) : [],
-          correct: Number(q.correct),
-          explanation: String(q.explanation)
-        })) : []
-      })) : [];
+      
+      // Log the raw data to inspect the structure
+      console.log("Raw data from API:", rawData);
+      
+      // Ensure the data matches our TestTopic interface with order field
+      const formattedData: TestTopic[] = Array.isArray(rawData) ? rawData.map(item => {
+        // Explicitly preserve the order field as a number
+        const orderValue = item.order !== undefined ? Number(item.order) : undefined;
+        
+        return {
+          id: String(item.id || item._id), // Use _id as fallback for id
+          _id: String(item._id || item.id), // Store _id explicitly
+          title: String(item.title),
+          order: orderValue, // Keep the order field
+          questions: Array.isArray(item.questions) ? item.questions.map(q => ({
+            question: String(q.question),
+            answers: Array.isArray(q.answers) ? q.answers.map(String) : [],
+            correct: Number(q.correct),
+            explanation: String(q.explanation)
+          })) : []
+        };
+      }) : [];
+      
+      // Log formatted data to verify order is preserved
+      console.log("Formatted data with order:", formattedData.map(item => ({
+        id: item.id,
+        title: item.title,
+        order: item.order
+      })));
       
       setTopics(formattedData);
       setError(null);
@@ -90,11 +107,15 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       ) {
         throw new Error('JSON data is not in the expected format');
       }
-      // Remove chapter field when loading from JSON
-      const formattedTopics = quizData.quizTopics.map(topic => {
+      // Process JSON data and maintain any order field if available
+      const formattedTopics = quizData.quizTopics.map((topic, index) => {
         // Create a new object without the chapter field
         const { chapter, ...topicWithoutChapter } = topic;
-        return topicWithoutChapter;
+        // Add order field if not present
+        return {
+          ...topicWithoutChapter,
+          order: topicWithoutChapter.order !== undefined ? Number(topicWithoutChapter.order) : index
+        };
       });
       setTopics(formattedTopics);
       setError(null);
@@ -193,11 +214,20 @@ export const useTopics = (topicId?: string) => {
     return topic?.questions || [];
   }, [topics, topicId, loading]);
 
-  // No sorting by chapter anymore
-  const sortedTopics = React.useMemo(() => 
-    [...topics],
-    [topics]
-  );
+  // Sort topics by order field, if present
+  const sortedTopics = React.useMemo(() => {
+    return [...topics].sort((a, b) => {
+      // If both have order, sort by order
+      if (typeof a.order === 'number' && typeof b.order === 'number') {
+        return a.order - b.order;
+      }
+      // If only one has order, the one with order comes first
+      if (typeof a.order === 'number') return -1;
+      if (typeof b.order === 'number') return 1;
+      // Fall back to alphabetical sort by title
+      return a.title.localeCompare(b.title);
+    });
+  }, [topics]);
 
   return {
     topics: sortedTopics,
