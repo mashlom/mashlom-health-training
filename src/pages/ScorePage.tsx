@@ -3,20 +3,31 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button, HomeButton } from "../components/Button";
 import { Trophy, Star } from "lucide-react";
+import { useTopics } from "../context/TopicsContext";
 
 interface LocationState {
   score: number;
 }
 
 const ScorePage: React.FC = () => {
-  const { department } = useParams<{ department: string }>();
+  const { trainingTopicId } = useParams<{ trainingTopicId?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  const { selectedTrainingTopic } = useTopics();
   const state = location.state as LocationState;
 
-  // If no score in state, redirect to department home
+  // If no score in state, redirect to training topic home
   if (typeof state?.score !== "number") {
-    navigate(`/${department}`);
+    // Use training-topic-specific route if trainingTopicId is available
+    if (trainingTopicId) {
+      navigate(`/training-topic/${trainingTopicId}`);
+    } else if (selectedTrainingTopic) {
+      // If we have a selected training topic but no trainingTopicId in URL, use the selected training topic's ID
+      navigate(`/training-topic/${selectedTrainingTopic.id}`);
+    } else {
+      // Fallback to training topics page
+      navigate('/training-topics');
+    }
     return null;
   }
 
@@ -37,7 +48,16 @@ const ScorePage: React.FC = () => {
   };
 
   const handleHome = () => {
-    navigate(`/${department}`);
+    // Use training-topic-specific route if trainingTopicId is available
+    if (trainingTopicId) {
+      navigate(`/training-topic/${trainingTopicId}`);
+    } else if (selectedTrainingTopic) {
+      // If we have a selected training topic but no trainingTopicId in URL, use the selected training topic's ID
+      navigate(`/training-topic/${selectedTrainingTopic.id}`);
+    } else {
+      // Fallback to training topics page
+      navigate('/training-topics');
+    }
   };
 
   return (

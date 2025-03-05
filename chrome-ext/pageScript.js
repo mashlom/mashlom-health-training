@@ -1,4 +1,9 @@
-let currentDataSource = localStorage.getItem('currentDataSource') || 'json';
+// Check if currentDataSource already exists in window scope to avoid redeclaration
+if (!Object.prototype.hasOwnProperty.call(window, 'mashlomDataManager')) {
+// Use window property instead of local variable to avoid conflict
+if (!Object.prototype.hasOwnProperty.call(window, 'currentDataSource')) {
+    window.currentDataSource = localStorage.getItem('currentDataSource') || 'json';
+}
 
 window.mashlomDataManager = {
     getCurrentDataSource: function () {
@@ -6,10 +11,10 @@ window.mashlomDataManager = {
             if (window.getCurrentDataSource) {
                 return window.getCurrentDataSource();
             }
-            return currentDataSource;
+            return window.currentDataSource;
         } catch (error) {
             console.error('Error getting data source:', error);
-            return currentDataSource;
+            return window.currentDataSource;
         }
     },
 
@@ -18,8 +23,8 @@ window.mashlomDataManager = {
             if (window.toggleDataSource) {
                 window.toggleDataSource(useMongoDB);
             } else {
-                currentDataSource = useMongoDB ? 'mongodb' : 'json';
-                localStorage.setItem('currentDataSource', currentDataSource);
+                window.currentDataSource = useMongoDB ? 'mongodb' : 'json';
+                localStorage.setItem('currentDataSource', window.currentDataSource);
                 window.dispatchEvent(new CustomEvent('dataSourceChanged'));
             }
         } catch (error) {
@@ -39,3 +44,4 @@ window.addEventListener('message', function (event) {
         window.mashlomDataManager.toggleDataSource(event.data.useMongoDB);
     }
 });
+}
