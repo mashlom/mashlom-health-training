@@ -21,7 +21,7 @@ export const getApiBaseUrl = () => {
   
   // Otherwise use the appropriate environment URL
   return import.meta.env.VITE_APP_ENV === 'staging'
-    ? 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net'
+    ? 'https://mashlom-stg-api-gyefcpeqa3cnejfx.westus-01.azurewebsites.net'
     : 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net';
 };
 
