@@ -15,7 +15,6 @@ interface Topic {
   _id?: string;
   name?: string;
   title?: string;
-  order?: number; // Add order field to the interface
 }
 
 interface EmptyTopic {
@@ -92,7 +91,6 @@ const HomePage: React.FC = () => {
     id: topic.id || topic._id, // Ensure id is available
     _id: topic._id || topic.id, // Ensure _id is available
     title: topic.title || topic.name, // Use name as fallback for title
-    order: topic.order || 0, // Ensure order has a default value of 0
   }));
   
   // Filter topics based on search term
@@ -102,11 +100,8 @@ const HomePage: React.FC = () => {
       )
     : processedTopics;
   
-  // Sort topics by order field
-  const sortedTestTopics = [...filteredTopics].sort((a, b) => {
-    // Sort by order field (default to 0 if not present)
-    return (a.order || 0) - (b.order || 0);
-  });
+  // No sorting by chapter anymore
+  const sortedTestTopics = [...filteredTopics];
   
   // Reset to page 1 when search term changes
   useEffect(() => {
@@ -287,7 +282,7 @@ const HomePage: React.FC = () => {
               ) : null;
             }
             
-            // Regular topic button with order info for debugging (optional)
+            // Regular topic button - updated to remove chapter reference
             return (
               <Button
                 key={`${currentPage}-${topic.id || `topic-${index}`}`}
