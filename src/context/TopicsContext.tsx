@@ -9,72 +9,69 @@ interface Question {
   explanation: string;
 }
 
-interface QuizTopic {
+interface TestTopic {
   id: string;
+  _id?: string; // Added _id field for MongoDB ObjectId support
   title: string;
-  chapter: number;
+  // Removed chapter field
   questions: Question[];
 }
 
 interface TopicsContextType {
-  topics: QuizTopic[];
+  topics: TestTopic[];
   loading: boolean;
   error: string | null;
+  selectedTrainingTopic: { id: string; name: string } | null;
+  setSelectedTrainingTopic: (trainingTopic: { id: string; name: string } | null) => void;
 }
 
+// Create the context
 const TopicsContext = createContext<TopicsContextType | undefined>(undefined);
 
-export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [topics, setTopics] = useState<QuizTopic[]>([]);
+export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [topics, setTopics] = useState<TestTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Use environment variables directly from Vite
-  const API_BASE_URL = getApiBaseUrl();
-
-  // Log build information
-  useEffect(() => {
-    console.log('Build Info:', {
-      environment: import.meta.env.VITE_APP_ENV,
-      prNumber: import.meta.env.VITE_PR_NUMBER,
-      commitSha: import.meta.env.VITE_COMMIT_SHA,
-      baseUrl: API_BASE_URL,
-    });
-  }, [API_BASE_URL]);
-
-  // Function to fetch data from MongoDB
+  const [selectedTrainingTopic, setSelectedTrainingTopic] = useState<{ id: string; name: string } | null>(() => {
+    // Initialize from localStorage if available
+    const trainingTopicId = localStorage.getItem('selectedTrainingTopicId');
+    const trainingTopicName = localStorage.getItem('selectedTrainingTopicName');
+    
+    if (trainingTopicId && trainingTopicName) {
+      return { id: trainingTopicId, name: trainingTopicName };
+    }
+    return null;
+  });
+  
+  // Function to fetch data from MongoDB with the selected training topic
   const fetchFromMongoDB = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/trainings/training-topic/test1`
-      );
-
+      const baseUrl = getApiBaseUrl();
+      
+      // Use the training topic ID instead of name for the API call
+      const trainingTopicIdentifier = selectedTrainingTopic ? selectedTrainingTopic.id : 'topic1';
+      const encodedIdentifier = encodeURIComponent(trainingTopicIdentifier);
+      
+      const response = await fetch(`${baseUrl}/api/trainingsAnonymous/training-topic/${encodedIdentifier}`);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch topics from MongoDB');
       }
 
       const rawData = await response.json();
-      // Ensure the data matches our QuizTopic interface
-      const formattedData: QuizTopic[] = Array.isArray(rawData)
-        ? rawData.map((item) => ({
-            id: String(item.id),
-            title: String(item.title),
-            chapter: Number(item.chapter),
-            questions: Array.isArray(item.questions)
-              ? item.questions.map((q) => ({
-                  question: String(q.question),
-                  answers: Array.isArray(q.answers)
-                    ? q.answers.map(String)
-                    : [],
-                  correct: Number(q.correct),
-                  explanation: String(q.explanation),
-                }))
-              : [],
-          }))
-        : [];
-
+      // Ensure the data matches our TestTopic interface - removed chapter field
+      const formattedData: TestTopic[] = Array.isArray(rawData) ? rawData.map(item => ({
+        id: String(item.id || item._id), // Use _id as fallback for id
+        _id: String(item._id || item.id), // Store _id explicitly
+        title: String(item.title),
+        questions: Array.isArray(item.questions) ? item.questions.map(q => ({
+          question: String(q.question),
+          answers: Array.isArray(q.answers) ? q.answers.map(String) : [],
+          correct: Number(q.correct),
+          explanation: String(q.explanation)
+        })) : []
+      })) : [];
+      
       setTopics(formattedData);
       setError(null);
     } catch (err) {
@@ -93,7 +90,13 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
       ) {
         throw new Error('JSON data is not in the expected format');
       }
-      setTopics(quizData.quizTopics);
+      // Remove chapter field when loading from JSON
+      const formattedTopics = quizData.quizTopics.map(topic => {
+        // Create a new object without the chapter field
+        const { chapter, ...topicWithoutChapter } = topic;
+        return topicWithoutChapter;
+      });
+      setTopics(formattedTopics);
       setError(null);
     } catch (err) {
       console.error('Error loading JSON data:', err);
@@ -106,30 +109,63 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({
   const loadData = async () => {
     setLoading(true);
     if (getCurrentDataSource() === 'mongodb') {
-      await fetchFromMongoDB();
+      // Only fetch data if a training topic is selected
+      if (selectedTrainingTopic) {
+        await fetchFromMongoDB();
+      } else {
+        // Clear topics if no training topic is selected
+        setTopics([]);
+      }
     } else {
       loadFromJSON();
     }
     setLoading(false);
   };
 
+  // Load data when selected training topic changes or data source changes
   useEffect(() => {
-    loadData();
-
+    // Only load data if a training topic is selected or we're using the JSON source
+    if (selectedTrainingTopic || getCurrentDataSource() === 'json') {
+      loadData();
+    } else {
+      // Clear topics if no training topic is selected
+      setTopics([]);
+      setLoading(false);
+    }
+    
     // Listen for data source changes
     const handleDataSourceChange = () => {
-      loadData();
+      if (selectedTrainingTopic || getCurrentDataSource() === 'json') {
+        loadData();
+      }
     };
-
+    
     window.addEventListener('dataSourceChanged', handleDataSourceChange);
-  
+    
     return () => {
       window.removeEventListener('dataSourceChanged', handleDataSourceChange);
     };
-  }, []);
+  }, [selectedTrainingTopic]);
+
+  // Update localStorage when selected training topic changes
+  useEffect(() => {
+    if (selectedTrainingTopic) {
+      localStorage.setItem('selectedTrainingTopicId', selectedTrainingTopic.id);
+      localStorage.setItem('selectedTrainingTopicName', selectedTrainingTopic.name);
+    } else {
+      localStorage.removeItem('selectedTrainingTopicId');
+      localStorage.removeItem('selectedTrainingTopicName');
+    }
+  }, [selectedTrainingTopic]);
 
   return (
-    <TopicsContext.Provider value={{ topics, loading, error }}>
+    <TopicsContext.Provider value={{ 
+      topics, 
+      loading, 
+      error, 
+      selectedTrainingTopic, 
+      setSelectedTrainingTopic 
+    }}>
       {children}
     </TopicsContext.Provider>
   );
@@ -140,12 +176,11 @@ export const useTopics = (topicId?: string) => {
   if (context === undefined) {
     throw new Error('useTopics must be used within a TopicsProvider');
   }
-
-  const { topics, loading, error } = context;
-
+  
+  const { topics, loading, error, selectedTrainingTopic, setSelectedTrainingTopic } = context;
+  
   const currentTopicQuestions = React.useMemo(() => {
     if (!topicId || loading) return [];
-
     if (topicId === 'random') {
       const allQuestions = topics.reduce<Question[]>(
         (acc, topic) => [...acc, ...topic.questions],
@@ -153,13 +188,14 @@ export const useTopics = (topicId?: string) => {
       );
       return [...allQuestions].sort(() => 0.5 - Math.random()).slice(0, 10);
     }
-
-    const topic = topics.find((t) => t.id === topicId);
+    // Look for the topic by either id or _id
+    const topic = topics.find(t => t.id === topicId || t._id === topicId);
     return topic?.questions || [];
   }, [topics, topicId, loading]);
 
-  const sortedTopics = React.useMemo(
-    () => [...topics].sort((a, b) => a.chapter - b.chapter),
+  // No sorting by chapter anymore
+  const sortedTopics = React.useMemo(() => 
+    [...topics],
     [topics]
   );
 
@@ -168,5 +204,7 @@ export const useTopics = (topicId?: string) => {
     currentTopicQuestions,
     loading,
     error,
+    selectedTrainingTopic,
+    setSelectedTrainingTopic
   };
 };
