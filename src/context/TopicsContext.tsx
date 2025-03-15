@@ -2,11 +2,20 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getApiBaseUrl, getCurrentDataSource } from '../config/env';
 import quizData from '../data/quizData.json';
 
+interface ImageInfo {
+  fileName?: string;
+  url?: string;
+}
+
 interface Question {
   question: string;
   answers: string[];
   correct: number;
   explanation: string;
+  questionImage?: ImageInfo;
+  explanationImage?: ImageInfo;
+  id?: string;
+  _id?: string;
 }
 
 interface TestTopic {
@@ -68,7 +77,18 @@ export const TopicsProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           question: String(q.question),
           answers: Array.isArray(q.answers) ? q.answers.map(String) : [],
           correct: Number(q.correct),
-          explanation: String(q.explanation)
+          explanation: String(q.explanation),
+          // Include image info if available
+          questionImage: q.questionImage ? {
+            fileName: q.questionImage.fileName,
+            url: q.questionImage.url
+          } : undefined,
+          explanationImage: q.explanationImage ? {
+            fileName: q.explanationImage.fileName,
+            url: q.explanationImage.url
+          } : undefined,
+          id: q.id || q._id,
+          _id: q._id || q.id
         })) : []
       })) : [];
       

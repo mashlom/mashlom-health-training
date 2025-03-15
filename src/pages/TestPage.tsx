@@ -6,11 +6,18 @@ import { Check, X, ArrowLeft, RefreshCw } from "lucide-react";
 import { useTopics } from "../context/TopicsContext";
 import { getApiBaseUrl } from "../config/env";
 
+interface ImageInfo {
+  fileName?: string;
+  url?: string;
+}
+
 interface Question {
   question: string;
   answers: string[];
   correct: number;
   explanation: string;
+  questionImage?: ImageInfo;
+  explanationImage?: ImageInfo;
   id?: string;
   _id?: string;
 }
@@ -38,6 +45,42 @@ const TestPage: React.FC = () => {
   const [manualTopicQuestions, setManualTopicQuestions] = useState<Question[]>([]);
   const [retryAttempted, setRetryAttempted] = useState(false);
 
+  // Log received questions for debugging
+  useEffect(() => {
+    if (currentTopicQuestions && currentTopicQuestions.length > 0) {
+      console.log("Current topic questions:", currentTopicQuestions);
+      
+      // Check for images in the questions
+      const questionsWithImages = currentTopicQuestions.filter(
+        q => q.questionImage?.url || q.explanationImage?.url
+      );
+      
+      if (questionsWithImages.length > 0) {
+        console.log("Found questions with images:", questionsWithImages.length);
+        console.log("First question with image:", questionsWithImages[0]);
+      } else {
+        console.log("No questions have images");
+      }
+    }
+  }, [currentTopicQuestions]);
+
+  // Debug log shuffled questions when they change
+  useEffect(() => {
+    if (shuffledQuestions && shuffledQuestions.length > 0) {
+      console.log("Shuffled questions:", shuffledQuestions);
+      
+      // Log image URLs specifically
+      shuffledQuestions.forEach((q, index) => {
+        if (q.questionImage?.url) {
+          console.log(`Question ${index} has image URL:`, q.questionImage.url);
+        }
+        if (q.explanationImage?.url) {
+          console.log(`Question ${index} has explanation image URL:`, q.explanationImage.url);
+        }
+      });
+    }
+  }, [shuffledQuestions]);
+
   // Function to directly fetch questions for the specific topic
   const fetchQuestionsForTopic = useCallback(async () => {
     setIsRetrying(true);
@@ -51,11 +94,10 @@ const TestPage: React.FC = () => {
       if (!currentTrainingTopicId) {
         throw new Error("No valid training topic ID for fetching questions");
       }
-
       // Encode the ID for the URL
       const encodedTrainingTopicId = encodeURIComponent(currentTrainingTopicId);
       
-      // Construct the endpoint - just using the training topic ID based on your example
+      // Construct the endpoint
       const endpoint = `${baseUrl}/api/trainingsAnonymous/training-topic/${encodedTrainingTopicId}`;
       
       console.log("Fetching questions from:", endpoint);
@@ -64,8 +106,10 @@ const TestPage: React.FC = () => {
       if (!response.ok) {
         throw new Error(`Failed to fetch questions: ${response.status}`);
       }
-
       const data = await response.json();
+      
+      // Debug log the raw data from the server
+      console.log("Raw data from server:", data);
       
       // Process the data appropriately - the response contains topics, each with an array of questions
       let questions: Question[] = [];
@@ -98,6 +142,18 @@ const TestPage: React.FC = () => {
         }
       }
       
+      // Check if any questions have images
+      const questionsWithImages = questions.filter(
+        q => q.questionImage?.url || q.explanationImage?.url
+      );
+      
+      if (questionsWithImages.length > 0) {
+        console.log("Found manually fetched questions with images:", questionsWithImages.length);
+        console.log("First question with image:", questionsWithImages[0]);
+      } else {
+        console.log("No manually fetched questions have images");
+      }
+      
       // Only update if we got valid data
       if (questions.length > 0) {
         // Shuffle the questions
@@ -115,14 +171,32 @@ const TestPage: React.FC = () => {
   }, [topicId, trainingTopicId, selectedTrainingTopic]);
 
   // Helper function to prepare the question data
-  const prepareQuestionData = (q: any): Question => ({
-    question: q.question || "No question text",
-    answers: Array.isArray(q.answers) ? q.answers : [],
-    correct: typeof q.correct === 'number' ? q.correct : 0,
-    explanation: q.explanation || "No explanation provided",
-    id: q.id || q._id,
-    _id: q._id || q.id
-  });
+  const prepareQuestionData = (q: any): Question => {
+    // Debug log the raw question data
+    console.log("Preparing question data:", q);
+    
+    const preparedData = {
+      question: q.question || "No question text",
+      answers: Array.isArray(q.answers) ? q.answers : [],
+      correct: typeof q.correct === 'number' ? q.correct : 0,
+      explanation: q.explanation || "No explanation provided",
+      questionImage: q.questionImage ? {
+        fileName: q.questionImage.fileName,
+        url: q.questionImage.url
+      } : undefined,
+      explanationImage: q.explanationImage ? {
+        fileName: q.explanationImage.fileName,
+        url: q.explanationImage.url
+      } : undefined,
+      id: q.id || q._id,
+      _id: q._id || q.id
+    };
+    
+    // Log the result of preparation
+    console.log("Prepared question data:", preparedData);
+    
+    return preparedData;
+  };
 
   // Combined questions - prefer currentTopicQuestions, fall back to manually fetched
   const combinedQuestions = currentTopicQuestions.length > 0 
@@ -148,7 +222,10 @@ const TestPage: React.FC = () => {
         question: q.question || "No question text",
         answers: Array.isArray(q.answers) ? q.answers : [],
         correct: typeof q.correct === 'number' ? q.correct : 0,
-        explanation: q.explanation || "No explanation provided"
+        explanation: q.explanation || "No explanation provided",
+        // Explicitly preserve image data
+        questionImage: q.questionImage,
+        explanationImage: q.explanationImage
       }));
       
       // Filter out any questions without answers
@@ -180,6 +257,7 @@ const TestPage: React.FC = () => {
         isCorrect: index === correctIndex,
         originalIndex: index // Keep track of original index
       }));
+
       // Shuffle the answers
       const shuffled = [...answersWithIndices].sort(() => Math.random() - 0.5);
       setShuffledAnswers(shuffled);
@@ -274,6 +352,17 @@ const TestPage: React.FC = () => {
   }
 
   if (!shuffledAnswers || shuffledAnswers.length === 0) return null;
+  
+  const currentQ = shuffledQuestions[currentQuestion];
+
+  // Debug log current question's image data
+  if (currentQ) {
+    console.log("Current question:", currentQuestion);
+    console.log("Has question image:", !!currentQ.questionImage?.url);
+    console.log("Question image URL:", currentQ.questionImage?.url);
+    console.log("Has explanation image:", !!currentQ.explanationImage?.url);
+    console.log("Explanation image URL:", currentQ.explanationImage?.url);
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -293,9 +382,25 @@ const TestPage: React.FC = () => {
         <CardContent className="p-6">
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-[var(--page-font-color)] leading-relaxed">
-              {shuffledQuestions[currentQuestion]?.question || "No question text"}
+              {currentQ?.question || "No question text"}
             </h2>
+            
+            {/* Display question image if available */}
+            {currentQ?.questionImage?.url && (
+              <div className="mt-4 flex justify-center">
+                <img 
+                  src={currentQ.questionImage.url} 
+                  alt="תמונת שאלה" 
+                  className="max-w-full max-h-64 object-contain rounded-lg border border-gray-200" 
+                  onError={(e) => {
+                    console.error("Error loading question image:", e);
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
           </div>
+
           <div className="space-y-4">
             {shuffledAnswers.map((answer, index) => (
               <button
@@ -324,6 +429,7 @@ const TestPage: React.FC = () => {
               </button>
             ))}
           </div>
+
           {showAnswer && (
             <div className="mt-8 space-y-6">
               <div className="bg-green-100 p-4 rounded-lg border border-green-300">
@@ -331,8 +437,23 @@ const TestPage: React.FC = () => {
                   הסבר:
                 </h3>
                 <p className="text-[var(--header-text-color)]">
-                  {shuffledQuestions[currentQuestion]?.explanation || "No explanation provided"}
+                  {currentQ?.explanation || "No explanation provided"}
                 </p>
+                
+                {/* Display explanation image if available */}
+                {currentQ?.explanationImage?.url && (
+                  <div className="mt-4 flex justify-center">
+                    <img 
+                      src={currentQ.explanationImage.url} 
+                      alt="תמונת הסבר" 
+                      className="max-w-full max-h-64 object-contain rounded-lg border border-green-200 mt-2" 
+                      onError={(e) => {
+                        console.error("Error loading explanation image:", e);
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               <div className="flex justify-end pt-4">
                 <Button
