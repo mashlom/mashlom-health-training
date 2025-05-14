@@ -23,7 +23,7 @@ export const getApiBaseUrl = () => {
   return import.meta.env.VITE_APP_ENV === 'staging'
     ? 'https://mashlom-stg-api-gyefcpeqa3cnejfx.westus-01.azurewebsites.net'// should be stg
     : 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net';
-};
+};    
 
 // Data source management
 let currentDataSource: DataSource =
