@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ credit, hospitalName }) => {
         {/* Changed <a> to <button> for react-router navigation */}
         <button onClick={handleNavigateToTopicSelection} className="focus:outline-none" aria-label="Go to homepage">
           <img 
-            src="public\assets\IconOnly_mashlomme.png" // Path from company's header
+            src="/assets/IconOnly_mashlomme.png" // Path from company's header
             alt="Mashlom Logo" 
             className="h-[42px] w-auto" // Adjusted for consistent height, auto width
           />
