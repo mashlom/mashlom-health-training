@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
@@ -30,47 +30,40 @@ const HomePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Parse current page from the URL
+  // Effect to parse current page from the URL's search query
   useEffect(() => {
-    // Custom parsing for HashRouter
-    let pageParam = null;
-    
-    // Try to get from search params first
-    const searchParams = new URLSearchParams(location.search);
-    pageParam = searchParams.get("page");
-    
-    // If not found in search, try to parse from hash
-    if (!pageParam && location.hash.includes("?")) {
-      const hashParts = location.hash.split("?");
-      if (hashParts.length > 1) {
-        const hashParams = new URLSearchParams(hashParts[1]);
-        pageParam = hashParams.get("page");
-      }
-    }
-    
-    // Try to extract from full URL as a last resort
-    if (!pageParam) {
-      const fullUrl = window.location.href;
-      const pageMatch = fullUrl.match(/[?&]page=(\d+)/);
-      if (pageMatch && pageMatch[1]) {
-        pageParam = pageMatch[1];
-      }
-    }
-    
+    const params = new URLSearchParams(location.search);
+    const pageParam = params.get("page");
+    let targetPage = 1;
+
     if (pageParam) {
       const parsedPage = parseInt(pageParam, 10);
-      if (!isNaN(parsedPage) && parsedPage !== currentPage) {
-        setCurrentPage(parsedPage);
+      if (!isNaN(parsedPage) && parsedPage > 0) {
+        targetPage = parsedPage;
+      } else {
+        // Invalid page param, navigate to page 1 to correct URL
+        if (trainingTopicId) {
+          navigate(`/training-topic/${trainingTopicId}?page=1`, { replace: true });
+        }
+        return; // Exit early, effect will re-run after navigation
       }
     }
-  }, [location, currentPage]);
+    // If no pageParam, targetPage remains 1.
+    // Optionally, enforce URL to show ?page=1 if not present:
+    // else if (trainingTopicId && !location.search.includes('page=')) {
+    //   navigate(`/training-topic/${trainingTopicId}?page=1`, { replace: true });
+    //   return;
+    // }
+
+
+    if (currentPage !== targetPage) {
+      setCurrentPage(targetPage);
+    }
+  }, [location.search, currentPage, trainingTopicId, navigate]);
 
   // Load training topic ID from URL if available
   useEffect(() => {
     if (trainingTopicId && (!selectedTrainingTopic || selectedTrainingTopic.id !== trainingTopicId)) {
-      // If we have a trainingTopicId in the URL but it doesn't match the selected training topic,
-      // we need to fetch training topic details and update the context
-      // For now, just update with minimal info - the full data will be fetched by other effects
       setSelectedTrainingTopic({ id: trainingTopicId, name: selectedTrainingTopic?.name || "Loading..." });
     }
   }, [trainingTopicId, selectedTrainingTopic, setSelectedTrainingTopic]);
@@ -78,80 +71,56 @@ const HomePage: React.FC = () => {
   // Redirect to training topic selection if no training topic is selected and no trainingTopicId in URL
   useEffect(() => {
     if (!loading && !selectedTrainingTopic && !trainingTopicId) {
-      // Only redirect if not already on the training topic selection page
       if (!window.location.href.includes('/training-topics')) {
-        navigate('/training-topics');
+        navigate('/training-topics', { replace: true });
       }
     }
   }, [loading, selectedTrainingTopic, trainingTopicId, navigate]);
   
-  // Process topics to ensure they have required properties
   const processedTopics = topics.map((topic: Topic) => ({
     ...topic,
-    id: topic.id || topic._id, // Ensure id is available
-    _id: topic._id || topic.id, // Ensure _id is available
-    title: topic.title || topic.name, // Use name as fallback for title
+    id: topic.id || topic._id,
+    _id: topic._id || topic.id,
+    title: topic.title || topic.name,
   }));
   
-  // Filter topics based on search term
   const filteredTopics = searchTerm 
     ? processedTopics.filter(topic => 
         (topic.title || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     : processedTopics;
   
-  // No sorting by chapter anymore
   const sortedTestTopics = [...filteredTopics];
   
-  // Reset to page 1 when search term changes
+  // Reset to page 1 when search term changes, if not already on page 1
   useEffect(() => {
     if (searchTerm && currentPage !== 1) {
-      setCurrentPage(1);
-      // Use training-topic-specific route if trainingTopicId is available
       if (trainingTopicId) {
-        navigate(`/training-topic/${trainingTopicId}?page=1`);
+        // Just navigate. The URL change will update currentPage via the effect above.
+        navigate(`/training-topic/${trainingTopicId}?page=1`, { replace: true });
       }
     }
-  }, [searchTerm, trainingTopicId, navigate, currentPage]);
+  }, [searchTerm, currentPage, trainingTopicId, navigate]);
   
-  // Calculate total pages
-  const totalPages = Math.ceil(sortedTestTopics.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(sortedTestTopics.length / ITEMS_PER_PAGE));
   
-  // Get current page items
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentTopics = sortedTestTopics.slice(startIndex, endIndex);
   
-  // Fill remaining slots with empty topics
   const filledTopics: (Topic | EmptyTopic)[] = [...currentTopics];
-  while (filledTopics.length < ITEMS_PER_PAGE) {
+  while (filledTopics.length < ITEMS_PER_PAGE && sortedTestTopics.length > 0) { // Only fill if there are topics
     filledTopics.push({
       id: `empty-${currentPage}-${filledTopics.length}`,
       isEmpty: true,
     });
   }
   
-  // Navigation handlers
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
-      
-      try {
-        // Update hash manually, preserving the pathname part
-        // Use training-topic-specific route if trainingTopicId is available
-        if (trainingTopicId) {
-          const newUrl = `#/training-topic/${trainingTopicId}?page=${nextPage}`;
-          window.location.hash = newUrl;
-        }
-        
-        // Also update the state directly to ensure UI updates
-        setCurrentPage(nextPage);
-      } catch (error) {
-        // Fall back to navigate if hash manipulation fails
-        if (trainingTopicId) {
-          navigate(`/training-topic/${trainingTopicId}?page=${nextPage}`);
-        }
-        setCurrentPage(nextPage);
+      if (trainingTopicId) {
+        navigate(`/training-topic/${trainingTopicId}?page=${nextPage}`);
       }
     }
   };
@@ -159,37 +128,18 @@ const HomePage: React.FC = () => {
   const handlePrevPage = () => {
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
-      
-      try {
-        // Update hash manually, preserving the pathname part
-        // Use training-topic-specific route if trainingTopicId is available
-        if (trainingTopicId) {
-          const newUrl = `#/training-topic/${trainingTopicId}?page=${prevPage}`;
-          window.location.hash = newUrl;
-        }
-        
-        // Also update the state directly to ensure UI updates
-        setCurrentPage(prevPage);
-      } catch (error) {
-        // Fall back to navigate if hash manipulation fails
-        if (trainingTopicId) {
-          navigate(`/training-topic/${trainingTopicId}?page=${prevPage}`);
-        }
-        setCurrentPage(prevPage);
+      if (trainingTopicId) {
+        navigate(`/training-topic/${trainingTopicId}?page=${prevPage}`);
       }
     }
   };
   
   const handleTopicSelect = (topicId: string) => {
-    // Make sure we have a valid trainingTopicId before navigating
     const currentTrainingTopicId = trainingTopicId || selectedTrainingTopic?.id;
-    
     if (currentTrainingTopicId) {
-      // Navigate directly to the test page with the correct IDs
       navigate(`/training-topic/${currentTrainingTopicId}/test/${topicId}`);
     } else {
-      // If no training topic ID is available (which shouldn't happen), redirect to training topics
-      navigate('/training-topics');
+      navigate('/training-topics', { replace: true });
     }
   };
 
@@ -201,9 +151,12 @@ const HomePage: React.FC = () => {
     return <div className="text-center p-4">Loading...</div>;
   }
 
-  // If no training topic selected, we can just return null as the useEffect will redirect
-  if (!selectedTrainingTopic) {
-    return null;
+  if (!selectedTrainingTopic && trainingTopicId) { // Still loading selectedTrainingTopic info
+    return <div className="text-center p-4">Loading training topic details...</div>;
+  }
+  
+  if (!selectedTrainingTopic) { // Should be handled by redirect effect, but as a fallback
+    return null; 
   }
   
   return (
@@ -212,7 +165,7 @@ const HomePage: React.FC = () => {
         {/* Header Section */}
         <div className="mb-4">
           <h1 className="text-xl font-bold text-center mb-2 text-[var(--page-font-color)]">
-            {selectedTrainingTopic.name}
+            {selectedTrainingTopic.name || "Loading..."}
           </h1>
           <div className="text-sm text-center mb-3 text-[var(--page-font-color)]">
             שאלות הכנה לשלב א ברפואה         
@@ -270,19 +223,17 @@ const HomePage: React.FC = () => {
           )}
           
           {filledTopics.map((topic, index) => {
-            // Check if this is an empty placeholder
             if ("isEmpty" in topic) {
-              return sortedTestTopics.length > 0 ? (
+              return (
                 <Button
                   key={`${currentPage}-empty-${index}`}
                   className={`w-full text-sm transition-all duration-300 ${BUTTON_HEIGHT} opacity-0 pointer-events-none`}
                 >
                   {/* Empty placeholder */}
                 </Button>
-              ) : null;
+              );
             }
             
-            // Regular topic button - updated to remove chapter reference
             return (
               <Button
                 key={`${currentPage}-${topic.id || `topic-${index}`}`}
@@ -302,7 +253,7 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Pagination Controls */}
-        {sortedTestTopics.length > ITEMS_PER_PAGE && (
+        {totalPages > 1 && ( // Show pagination only if more than one page
           <div className="flex-none pt-3 mt-1 border-t border-[var(--border-color)]">
             <div className="flex justify-between items-center">
               <Button
@@ -316,7 +267,7 @@ const HomePage: React.FC = () => {
                 הקודם
               </Button>
               <span className="text-sm text-[var(--page-font-color)]">
-                עמוד {currentPage} מתוך {totalPages || 1}
+                עמוד {currentPage} מתוך {totalPages}
               </span>
               <Button
                 onClick={handleNextPage}

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "../components/Card";
 import { Button } from "../components/Button";
 import { getApiBaseUrl } from "../config/env";
 import { useTopics } from "../context/TopicsContext";
-import { Book, Search, RefreshCw, ChevronRight, ChevronLeft, Building } from "lucide-react";
+import { Book, Search, RefreshCw, ChevronRight, ChevronLeft } from "lucide-react"; // Removed Building as it wasn't used
 
 interface TrainingTopic {
   id: string;
@@ -27,21 +27,36 @@ const BeforePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Parse current page from the URL on initial load and when URL changes
+  // Effect to parse current page from the URL's search query
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const pageParam = params.get("page");
-    
-    if (pageParam) {
-      const page = parseInt(pageParam, 10);
-      setCurrentPage(page);
-    } else {
-      // If no page parameter is present, default to page 1
-      setCurrentPage(1);
-    }
-  }, [location.search]);
+    let targetPage = 1;
 
-  // Fetch training topics data
+    if (pageParam) {
+      const parsedPage = parseInt(pageParam, 10);
+      if (!isNaN(parsedPage) && parsedPage > 0) {
+        targetPage = parsedPage;
+      } else {
+        // Invalid page param, navigate to page 1 to correct URL
+        navigate(`/training-topics?page=1`, { replace: true });
+        return; // Exit early, effect will re-run after navigation
+      }
+    }
+    // If no pageParam, targetPage remains 1.
+    // Optionally, enforce URL to show ?page=1 if not present:
+    // else if (!location.search.includes('page=')) {
+    //    navigate(`/training-topics?page=1`, { replace: true });
+    //    return;
+    // }
+
+
+    if (currentPage !== targetPage) {
+      setCurrentPage(targetPage);
+    }
+  }, [location.search, currentPage, navigate]);
+
+
   useEffect(() => {
     const fetchTrainingTopics = async () => {
       try {
@@ -64,74 +79,53 @@ const BeforePage: React.FC = () => {
       }
     };
 
-    // Clear any previously selected training topic when visiting this page
     setSelectedTrainingTopic(null);
-    
-    // Fetch the list of available training topics
     fetchTrainingTopics();
   }, [setSelectedTrainingTopic]);
 
-  // Filter training topics based on search term (search in both training topic name and hospital name)
   const filteredTrainingTopics = trainingTopics.filter(trainingTopic => 
     trainingTopic.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (trainingTopic.hospitalName && trainingTopic.hospitalName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Reset to page 1 when search term changes
+  // Reset to page 1 when search term changes, if not already on page 1
   useEffect(() => {
     if (searchTerm && currentPage !== 1) {
-      setCurrentPage(1);
-      updateUrlWithPage(1);
+      // Just navigate. The URL change will update currentPage via the effect above.
+      navigate(`/training-topics?page=1`, { replace: true });
     }
-  }, [searchTerm]);
+  }, [searchTerm, currentPage, navigate]);
 
-  // Calculate total pages
   const totalPages = Math.max(1, Math.ceil(filteredTrainingTopics.length / ITEMS_PER_PAGE));
   
-  // Get training topics for current page
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentTrainingTopics = filteredTrainingTopics.slice(startIndex, endIndex);
   
-  // Fill remaining slots with empty training topics if needed
   const filledTrainingTopics: (TrainingTopic | { id: string; isEmpty: true })[] = [...currentTrainingTopics];
-  while (filledTrainingTopics.length < ITEMS_PER_PAGE) {
+  while (filledTrainingTopics.length < ITEMS_PER_PAGE && filteredTrainingTopics.length > 0) { // Only fill if there are topics
     filledTrainingTopics.push({
       id: `empty-${currentPage}-${filledTrainingTopics.length}`,
       isEmpty: true,
     });
   }
 
-  // Function to update URL with the page number
-  const updateUrlWithPage = (page: number) => {
-    const path = `/training-topics`;
-    
-    // Always include the page parameter for consistency
-    navigate(`${path}?page=${page}`, { replace: true });
-  };
-
   const handleTrainingTopicSelect = (trainingTopicId: string, trainingTopicName: string) => {
-    // Update the selected training topic in context with both ID and name
     setSelectedTrainingTopic({ id: trainingTopicId, name: trainingTopicName });
-    
-    // Navigate to the new training-topic-specific route
-    navigate(`/training-topic/${trainingTopicId}`);
+    navigate(`/training-topic/${trainingTopicId}`); // Navigates to page 1 by default for the new topic
   };
 
-  // Navigation handlers
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      updateUrlWithPage(nextPage);
+      navigate(`/training-topics?page=${nextPage}`);
     }
   };
   
   const handlePrevPage = () => {
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
-      setCurrentPage(prevPage);
-      updateUrlWithPage(prevPage);
+      navigate(`/training-topics?page=${prevPage}`);
     }
   };
 
@@ -180,7 +174,7 @@ const BeforePage: React.FC = () => {
             <p>{error}</p>
             <button 
               className="mt-2 text-sm underline flex items-center justify-center mx-auto" 
-              onClick={() => window.location.reload()}
+              onClick={() => window.location.reload()} // Simple reload for now
             >
               <RefreshCw className="w-3 h-3 mr-1" />
               נסה שנית
@@ -244,7 +238,7 @@ const BeforePage: React.FC = () => {
         </div>
         
         {/* Pagination Controls */}
-        {filteredTrainingTopics.length > ITEMS_PER_PAGE && (
+        {totalPages > 1 && ( // Show pagination only if more than one page
           <div className="flex-none pt-3 mt-3 border-t border-[var(--border-color)]">
             <div className="flex justify-between items-center">
               <Button
@@ -258,7 +252,7 @@ const BeforePage: React.FC = () => {
                 הקודם
               </Button>
               <span className="text-sm text-[var(--page-font-color)]">
-                עמוד {currentPage} מתוך {totalPages || 1}
+                עמוד {currentPage} מתוך {totalPages}
               </span>
               <Button
                 onClick={handleNextPage}
