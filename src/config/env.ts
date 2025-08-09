@@ -18,11 +18,11 @@ export const getApiBaseUrl = () => {
   if (import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'local') {
     return 'http://localhost:5001';
   }
-  
+
   // Otherwise use the appropriate environment URL
   return import.meta.env.VITE_APP_ENV === 'staging'
-    ? 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net'// should be stg
-    : 'https://mashlom-prod-api-dwdvhvaxadbgfahv.westus-01.azurewebsites.net';
+    ? 'https://mashlom-cms-stg-hyheb8eaeue0f5br.francecentral-01.azurewebsites.net'
+    : 'https://mashlom-cms-prod-api-edhcf8htfmc2axaa.francecentral-01.azurewebsites.net';
 };    
 
 // Data source management
